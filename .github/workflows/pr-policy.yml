@@ -1,0 +1,21 @@
+name: Política de Pull Requests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  enforce-branch-workflow:
+    name: Validar flujo de ramas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bloquear PRs desde main hacia main
+        if: github.head_ref == 'main'
+        run: |
+          echo "::error::No se permiten Pull Requests desde la rama main. Crea una rama de feature/fix/docs."
+          exit 1
+
+      - name: Recordatorio de revisión
+        run: |
+          echo "Los PRs deben permanecer abiertos a revisión."
+          echo "Solo @JuanRomerWRST puede hacer merge a main (protegido por reglas del repositorio)."
