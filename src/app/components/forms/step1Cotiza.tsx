@@ -2,6 +2,9 @@
 
 import { useState, useTransition } from 'react';
 import { useActionState } from 'react';
+import Image from 'next/image'
+import CarIcon from "./images/carro.svg"
+import BikeIcon from "./images/moto.svg"
 import { consultarVehiculoAction, obtenerMarcasAction, obtenerReferenciasAction, obtenerVersionesAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -124,21 +127,36 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
                     <SelectorVehiculo
                         id="carro"
                         label="Carro"
-                        icon={<Car size={24} />}
+                        icon={<Image
+                            src="/images/carro.svg"
+                            alt="Icono de carro"
+                            width={60}
+                            height={60}
+                        />}
                         isActive={tipoVehiculo === 'carro'}
                         onClick={() => handleTipoVehiculoChange('carro')}
                     />
                     <SelectorVehiculo
                         id="moto"
                         label="Moto"
-                        icon={<Bike size={24} />}
+                        icon={<Image
+                            src="/images/moto.svg"
+                            alt="Icono de moto"
+                            width={60}
+                            height={60}
+                        />}
                         isActive={tipoVehiculo === 'moto'}
                         onClick={() => handleTipoVehiculoChange('moto')}
                     />
                     <SelectorVehiculo
                         id="pesado"
                         label="Pesado"
-                        icon={<Truck size={24} />}
+                        icon={<Image
+                            src="/images/carro.svg"
+                            alt="Icono de carro"
+                            width={60}
+                            height={60}
+                        />}
                         isActive={tipoVehiculo === 'pesado'}
                         onClick={() => setTipoVehiculo('pesado')}
                     />
@@ -266,7 +284,7 @@ function SelectorVehiculo({ id, label, icon, isActive, onClick }: any) {
                 : 'bg-white border-gray-200 text-black hover:border-gray-300'
                 }`}
         >
-            <div className="mb-2">{icon}</div>
+            <div className="mb-2" >{icon}</div>
             <span className="font-semibold text-sm">{label}</span>
             {isActive && (
                 <div className="absolute top-2 right-2 bg-[#FFCC00] text-black rounded-full p-0.5">
