@@ -1,10 +1,10 @@
 export default function Beneficios() {
     return (
-        <div className="px-6 py-12 lg:py-24 space-y-8  lg:max-w-280 lg:mx-auto">
-            <h2 className="text-4xl text-center font-bold lg:text-5xl">Doble Respaldo </h2>
-            <p className="text-center">No solo vendemos pólizas: te acompañamos en todo el proceso </p>
-            <div className="lg:flex lg:gap-3 flex-row-reverse">
-                <img src="/images/respaldo.webp" alt="" className="rounded-t-4xl lg:max-w-[50%] lg:rounded-4xl lg:object-cover" />
+        <div className="px-6 py-12 lg:py-24 lg:max-w-280 lg:mx-auto">
+            <h2 className="text-4xl text-center font-bold lg:text-5xl tracking-tight">Doble Respaldo </h2>
+            <p className="text-center mt-3">No solo vendemos pólizas: te acompañamos en todo el proceso </p>
+            <div className="lg:flex lg:gap-3 flex-row-reverse mt-12">
+                <img src="/images/respaldo.webp" alt="" className="rounded-t-4xl lg:max-w-[50%] lg:rounded-4xl lg:object-cover w-full lg:w-auto" />
                 <ul className="space-y-0.5 lg:space-y-3 bg-[#FFF7CF] py-7 rounded-b-4xl lg:py-0 lg:bg-transparent">
                     <li className="py-8 px-5 bg-white rounded-t-4xl lg:rounded-4xl lg:shadow-[-12px_0_0_#FFF7CF]">
                         <div className="flex gap-3 items-center">
