@@ -49,7 +49,7 @@ export default function Step3DatosPersonales({
   vehiculoData,
   initialData,
 }: Step3Props) {
-  // Estados del Formulario
+
   const [nombreCompleto, setNombreCompleto] = useState(
     initialData?.nombreCompleto || "",
   );
@@ -69,20 +69,20 @@ export default function Step3DatosPersonales({
     initialData?.educationalLevel || "professional",
   );
 
-  // Opciones de prospección/CRM
+
   const [vencimientoPoliza, setVencimientoPoliza] = useState("Ya mismo");
   const [endosoBanco, setEndosoBanco] = useState("No tiene endoso");
 
-  // Autocompletado de Ciudades DIVIPOLA
+
   const [queryCiudad, setQueryCiudad] = useState("");
   const [ciudadSeleccionada, setCiudadSeleccionada] =
     useState<MunicipioDIVIPOLA | null>(
       initialData?.cityCode && initialData?.cityName
         ? {
-            city_code: initialData.cityCode,
-            city_name: initialData.cityName,
-            state_name: "", // Opcional
-          }
+          city_code: initialData.cityCode,
+          city_name: initialData.cityName,
+          state_name: "",
+        }
         : null,
     );
   const [listaCiudades, setListaCiudades] = useState<MunicipioDIVIPOLA[]>([]);
@@ -106,7 +106,7 @@ export default function Step3DatosPersonales({
     }
   };
 
-  // Manejo del Submit del Paso 3
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorLocal("");
@@ -137,18 +137,18 @@ export default function Step3DatosPersonales({
       cityName: ciudadSeleccionada.city_name,
     };
 
-    // Disparamos la acción del servidor y avanzamos al Paso 4 pasando la sesión de cotización
+
     startTransitionSubmit(async () => {
-      // Le pasamos el estado actual acumulado (Vehículo + Personales)
+
       const cotizadorPayload = {
-        vehiculo: vehiculoData, // Asumimos que viene por props desde el orquestador
+        vehiculo: vehiculoData,
         personales: payloadPersonales,
       };
 
       const res = await iniciarCotizacionAction(cotizadorPayload);
 
       if (res.success && res.channelName) {
-        // Pasamos al Paso 4 enviando el canal de transmisión de las ofertas
+
         onNext({
           personales: payloadPersonales,
           session: {
@@ -240,22 +240,20 @@ export default function Step3DatosPersonales({
             <Button
               type="button"
               onClick={() => setGenero("M")}
-              className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input  ${
-                genero === "M"
+              className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input  ${genero === "M"
                   ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
                   : "border-gray-200 bg-white "
-              }`}
+                }`}
             >
               Masculino
             </Button>
             <Button
               type="button"
               onClick={() => setGenero("F")}
-              className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input  ${
-                genero === "F"
+              className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input  ${genero === "F"
                   ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
                   : "border-gray-200 bg-white "
-              }`}
+                }`}
             >
               Femenino
             </Button>
@@ -395,11 +393,10 @@ export default function Step3DatosPersonales({
                 key={op}
                 type="button"
                 onClick={() => setVencimientoPoliza(op)}
-                className={`w-full text-left p-6 rounded-full border text-sm font-medium transition-all shadow-xs border-input ${
-                  vencimientoPoliza === op
+                className={`w-full text-left p-6 rounded-full border text-sm font-medium transition-all shadow-xs border-input ${vencimientoPoliza === op
                     ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
                     : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 {op}
               </Button>
@@ -418,11 +415,10 @@ export default function Step3DatosPersonales({
                 key={op.id}
                 type="button"
                 onClick={() => setEndosoBanco(op.label)}
-                className={`w-full text-left p-6 rounded-full  text-sm font-medium transition-all shadow-xs border border-input ${
-                  endosoBanco === op.label
+                className={`w-full text-left p-6 rounded-full  text-sm font-medium transition-all shadow-xs border border-input ${endosoBanco === op.label
                     ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
                     : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 {op.label}
               </Button>

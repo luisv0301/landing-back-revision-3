@@ -19,12 +19,12 @@ interface Step2Props {
 }
 
 export default function Step2Verifica({ vehiculo, onNext }: Step2Props) {
-    // Determinamos el valor a mostrar: si es 0km priorizamos el ingresado, sino el de Fasecolda
+
     const rawPrecio = vehiculo.esCeroKm
         ? vehiculo.commercialPrice || vehiculo.referencePrice
         : vehiculo.referencePrice || vehiculo.commercialPrice;
 
-    // Formateador estándar para moneda Colombiana (COP)
+
     const precioFormateado = new Intl.NumberFormat('es-CO', {
         style: 'currency',
         currency: 'COP',

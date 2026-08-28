@@ -178,10 +178,7 @@ export default function Step4Ofertas({
       setErrorSocket("Error de conexión: " + e.message);
     }
 
-    // ==========================================
-    // TEMPORIZADOR DE CONTINGENCIA
-    // ==========================================
-    // A los 35 segundos sabemos que Agente Motor ya liquidó las primas internamente
+
     const contingenciaTimer = setTimeout(() => {
       if (ofertasRef.current.length === 0) {
         setCargando(false);
@@ -255,11 +252,10 @@ export default function Step4Ofertas({
           <button
             type="button"
             onClick={() => setFiltroActivo("todas")}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1.5 ${
-              filtroActivo === "todas"
+            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1.5 ${filtroActivo === "todas"
                 ? "bg-[#222222] text-white shadow-sm"
                 : "text-gray-700 hover:text-black"
-            }`}
+              }`}
           >
             <span>Todas ({ofertas.length})</span>
             {filtroActivo === "todas" && (
@@ -272,11 +268,10 @@ export default function Step4Ofertas({
           <button
             type="button"
             onClick={() => setFiltroActivo("economica")}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center ${
-              filtroActivo === "economica"
+            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center ${filtroActivo === "economica"
                 ? "bg-[#222222] text-white shadow-sm"
                 : "text-gray-700 hover:text-black"
-            }`}
+              }`}
           >
             <span>$ Más Económica</span>
           </button>
@@ -284,11 +279,10 @@ export default function Step4Ofertas({
           <button
             type="button"
             onClick={() => setFiltroActivo("cobertura")}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1 ${
-              filtroActivo === "cobertura"
+            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1 ${filtroActivo === "cobertura"
                 ? "bg-[#222222] text-white shadow-sm"
                 : "text-gray-700 hover:text-black"
-            }`}
+              }`}
           >
             <span className="text-xs">🛡️</span>
             <span>Mejor Cobertura</span>

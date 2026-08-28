@@ -25,7 +25,6 @@ export const PHONE_CONTACT = {
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
 
-    // Bloquea el scroll del body cuando el menú móvil está abierto
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = "hidden";

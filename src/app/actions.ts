@@ -175,7 +175,7 @@ export async function consultarVehiculoAction(
                 line: detalleVehiculo?.line,
                 referencePrice: detalleVehiculo?.vehicle_risk?.reference_price,
                 imagen: detalleVehiculo?.imagen?.codigo_foto?.[0]?.nombre,
-                rawFasecolda: detalleVehiculo // Guardamos todo el objeto por si se necesita en los siguientes pasos
+                rawFasecolda: detalleVehiculo
             }
         };
 

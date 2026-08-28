@@ -20,7 +20,7 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
     const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>('carro');
     const [usoPesado, setUsoPesado] = useState<string>('carga_transporte_mercancia_propia');
 
-    // Estado para la cascada 0 km
+
     const [marcas, setMarcas] = useState<string[]>([]);
     const [referencias, setReferencias] = useState<string[]>([]);
     const [versiones, setVersiones] = useState<any[]>([]);
@@ -33,7 +33,7 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
 
     const [isPendingCatalog, startTransition] = useTransition();
 
-    // Acción principal del formulario
+
     const [state, formAction, isPending] = useActionState(async (prevState: any, formData: FormData) => {
         const res = await consultarVehiculoAction(prevState, formData);
         if (res.success) {
@@ -44,13 +44,12 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         if (esCeroKm) {
-            e.preventDefault(); // Detenemos el envío a la Server Action de Placa
+            e.preventDefault();
 
-            // Buscamos los datos completos de la versión elegida
             const versionObjeto = versiones.find((v) => v.code === versionSel);
 
             const datosVehiculoCeroKm = {
-                placa: '', // Cadena vacía requerida por la API para 0km
+                placa: '',
                 tipoVehiculo,
                 esCeroKm: true,
                 fasecoldaCode: versionSel,
@@ -61,15 +60,15 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
                 referencePrice: versionObjeto?.precioReferencia || Number(precioFactura) || 0,
             };
 
-            // Avanzamos directamente al Paso 2 sin llamar a la API
+
             onSuccess(datosVehiculoCeroKm);
         }
-        // Si no es 0km (tiene placa), dejamos que el evento continúe hacia formAction normalmente
+
     };
 
     const handleTipoVehiculoChange = (tipo: 'carro' | 'moto' | 'pesado') => {
         setTipoVehiculo(tipo);
-        // Reseteamos selecciones de catálogo 0km al cambiar tipo
+
         if (esCeroKm) {
             setMarcaSel('');
             setRefSel('');
@@ -77,10 +76,10 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
         }
     };
 
-    // Cambio de modo 0km: Carga marcas sin useEffect
+
     const handleToggleCeroKm = (checked: boolean) => {
         setEsCeroKm(checked);
-        //quitar
+
 
         if (checked && marcas.length === 0) {
             startTransition(async () => {
@@ -90,7 +89,7 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
         }
     };
 
-    // Al seleccionar Marca
+
     const handleMarcaChange = (marca: string | null) => {
         if (!marca) return;
         setMarcaSel(marca);
@@ -103,7 +102,7 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
         });
     };
 
-    // Al seleccionar Referencia/Línea
+
     const handleRefChange = (ref: string | null) => {
         if (!ref) return;
         setRefSel(ref);
@@ -122,7 +121,7 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
                 <input type="hidden" name="tipoVehiculo" value={tipoVehiculo} />
                 <input type="hidden" name="esCeroKm" value={esCeroKm.toString()} />
 
-                {/* Selector de Tipo de Vehículo */}
+
                 <div className="grid grid-cols-3 gap-3">
                     <SelectorVehiculo
                         id="carro"
