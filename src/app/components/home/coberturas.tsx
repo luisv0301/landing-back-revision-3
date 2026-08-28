@@ -211,7 +211,7 @@ export default function Coberturas() {
                                         alt={currentCoverage.image.alt}
                                         loading="lazy"
                                         decoding="async"
-                                        className="object-cover rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:w-auto"
+                                        className="object-cover rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:w-auto lg:object-right"
                                     />
                                 </picture>
                             </div>
