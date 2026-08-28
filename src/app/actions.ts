@@ -98,7 +98,9 @@ export async function consultarVehiculoAction(
     });
 
     if (!validatedFields.success) {
-        return { error: validatedFields.error.errors[0].message };
+        return {
+            error: validatedFields.error.issues[0]?.message || 'Datos del vehículo inválidos'
+        };
     }
 
     const { placa, tipoVehiculo, useType, esCeroKm } = validatedFields.data;
