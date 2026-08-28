@@ -112,7 +112,7 @@ export default function Coberturas() {
         <section
             id="coberturas"
             aria-labelledby="coverage-heading"
-            className="w-full py-16 px-4 sm:px-6 lg:py-24 lg:max-w-280 lg:mx-auto"
+            className="w-full py-16 px-6 sm:px-6 lg:py-24 lg:max-w-280 lg:mx-auto"
         >
             <div className="mx-auto max-w-6xl">
 
@@ -211,7 +211,7 @@ export default function Coberturas() {
                                         alt={currentCoverage.image.alt}
                                         loading="lazy"
                                         decoding="async"
-                                        className="object-cover rounded-b-4xl lg:h-full lg:rounded-t-4xl"
+                                        className="object-cover rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:w-auto"
                                     />
                                 </picture>
                             </div>

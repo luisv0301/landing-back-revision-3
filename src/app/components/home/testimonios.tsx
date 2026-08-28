@@ -45,14 +45,14 @@ export default function TestimonialsSection() {
         <section
             id="testimonios"
             aria-labelledby="testimonials-heading"
-            className="relative w-full overflow-hidden bg-[#222325] px-4 py-16 sm:px-6 lg:px-8 lg:py-24 rounded-4xl"
+            className="relative w-full overflow-hidden bg-[#222325] py-16 lg:px-8 lg:py-24 rounded-4xl"
         >
 
             <img src="/images/testimonios-bg.webp" alt="" className="w-full h-full absolute object-cover object-bottom-left top-0 left-0" />
 
             <div className="relative mx-auto lg:max-w-280">
 
-                <header className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
+                <header className="mx-auto mb-12 max-w-3xl text-center px-4 sm:mb-16 sm:px-6 ">
                     <h2
                         id="testimonials-heading"
                         className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
@@ -168,7 +168,7 @@ export function TestimonialList({ testimonials }: TestimonialListProps) {
                 <motion.div
                     key={item.id}
                     variants={itemVariants}
-                    className="w-[85vw] shrink-0 snap-center sm:w-[360px] lg:w-auto"
+                    className="w-[85%] shrink-0 snap-center sm:w-[360px] lg:w-auto first:ml-4 last:mr-4 lg:first:ml-0 lg:last:mr-0"
                 >
                     <TestimonialCard testimonial={item} />
                 </motion.div>
@@ -184,7 +184,7 @@ interface TestimonialCardProps {
 
 export function TestimonialCard({ testimonial }: TestimonialCardProps) {
     return (
-        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm">
+        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm ">
             <div>
                 {/* Author Header */}
                 <header className="flex items-center gap-3.5">

@@ -17,16 +17,16 @@ export default function Home() {
       <HomeHeader />
       <Marquee />
       <Beneficios />
-      <div className="px-2">
+      <div className="px-6">
         <ComoFunciona />
       </div>
       <Coberturas />
-      <div className="px-2">
+      <div className="px-6">
         <TestimonialsSection />
       </div>
       <Aseguradoras />
       <FAQS />
-      <div className="px-2 pb-2">
+      <div className="px-6 pb-6">
         <Footer />
       </div>
     </div>
