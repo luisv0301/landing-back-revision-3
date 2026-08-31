@@ -51,7 +51,7 @@ export default function CotizadorForm() {
       jsonComparativoUrl: datos.jsonComparativoUrl,
       pdfUrl: datos.pdfUrl,
     }));
-    setStep(4);
+    //setStep(4);
   };
 
   const handleSelectOferta = (ofertaElegida: any) => {
