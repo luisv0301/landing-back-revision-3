@@ -2,7 +2,6 @@
 
 import crypto from "crypto";
 
-
 async function obtenerTokenAgenteMotor(): Promise<string> {
   const authPayload = {
     username: process.env.AGENTE_MOTOR_USERNAME,
@@ -161,17 +160,18 @@ export async function iniciarCotizacionAction(datos: any) {
 
     console.log("DATOS DE VEHICULO PERSONALES: ", vehiculo, personales);
 
-
     const emailContacto =
       process.env.NODE_ENV === "production"
         ? personales.email
         : "test@agentemotor.com";
 
-
     const rawPhone = (personales.telefono || "").replace(/\D/g, "");
     const formattedPhone = rawPhone.startsWith("57")
       ? `+${rawPhone}`
       : `+57${rawPhone}`;
+
+    const callbackrurl =
+      "https://xjqpsc98-3000.use2.devtunnels.ms/api/webhook/agentemotor/";
 
     const payloadQuotation = {
       name: "event-create-quote",
@@ -180,14 +180,18 @@ export async function iniciarCotizacionAction(datos: any) {
         user_mail:
           process.env.AGENTE_MOTOR_USER_MAIL || "Intercolseguros@gmail.com",
       },
-      channel_name: fallbackChannelName,
+      callback: {
+        channel_name: fallbackChannelName,
+        callback_param: fallbackChannelName,
+        url_callback: callbackrurl,
+      },
       data: {
         business_line: "vehiculos",
         insurable_objects: [
           {
             type: "vehicle",
             vehicle: {
-              plate: vehiculo.esCeroKm ? "XXX000" : vehiculo.placa || "XXX000",
+              plate: vehiculo.esCeroKm ? "" : vehiculo.placa || "",
               model: Number(vehiculo.modelo),
               codification: {
                 code: vehiculo.fasecoldaCode,
@@ -292,59 +296,30 @@ export async function iniciarCotizacionAction(datos: any) {
 
 export async function consultarOfertasRespaldoAction(
   jsonComparativoUrl: string,
-  token?: string,
 ) {
-  console.log(
-    ">>>>>>>> CONSULTANDO OFERTAS RESPALDO JSONCOMPARATIVO: ",
-    jsonComparativoUrl,
-  );
-
   try {
-    if (!jsonComparativoUrl || !token) return { success: false, ofertas: [] };
-
-
-    const authHeader = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
-
-    console.log(
-      ">>>>>>>> ENVIANDO CON AUTH HEADER: ",
-      authHeader.substring(0, 20) + "...",
-    );
-
+    if (!jsonComparativoUrl) return { success: false, ofertas: [] };
 
     const res = await fetch(jsonComparativoUrl, {
-      method: "POST",
+      method: "GET",
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: authHeader,
       },
       cache: "no-store",
     });
 
-    console.log(">>>>>>>>>>>>>> STATUS: ", res.status, res.statusText);
-
     if (!res.ok) {
-      const errText = await res.text();
-      console.error(
-        "Error HTTP en get_opportunity_offers:",
-        res.status,
-        errText,
-      );
-
-
       return { success: false, ofertas: [] };
     }
 
     const data = await res.json();
-    console.log(
-      ">>>>>>>>>>>>>>> RESPUESTA JSON: ",
-      JSON.stringify(data, null, 2),
-    );
 
+    // Extraer desde policy_list (clave principal devuelta por quotations.agentemotor.com)
     const rawOffers =
+      data.policy_list ||
+      data.sale_orders ||
       data.offers ||
       data.data ||
-      data.response ||
       (Array.isArray(data) ? data : []);
 
     return { success: true, ofertas: rawOffers };
@@ -353,7 +328,6 @@ export async function consultarOfertasRespaldoAction(
     return { success: false, ofertas: [] };
   }
 }
-
 // --------------- CON WEBHOOK-------------------------------
 
 /*
