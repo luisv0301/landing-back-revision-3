@@ -163,7 +163,6 @@ export default function Step4Ofertas({
   };
 
   useEffect(() => {
-    // Cuenta regresiva inicial de 25s para dar tiempo de consolidación sin exceder la cuota
     const timerInterval = setInterval(() => {
       setSegundosEspera((prev) => {
         if (prev <= 1) {
@@ -230,7 +229,6 @@ export default function Step4Ofertas({
         </p>
       </div>
 
-      {/* Barra de Filtros */}
       {ofertas.length > 0 && (
         <div className="bg-white p-1.5 rounded-full border border-gray-200 shadow-sm flex items-center justify-between w-full max-w-md mb-8">
           <button
@@ -277,7 +275,6 @@ export default function Step4Ofertas({
         </div>
       )}
 
-      {/* Banner de Espera Inicial y Consulta */}
       {cargando && (
         <div className="w-full bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -310,7 +307,6 @@ export default function Step4Ofertas({
         </div>
       )}
 
-      {/* Contenedor de Ofertas */}
       <div className="w-full space-y-6">
         <AnimatePresence mode="popLayout">
           {ofertasFiltradas.map((item) => (
@@ -412,7 +408,6 @@ export default function Step4Ofertas({
           ))}
         </AnimatePresence>
 
-        {/* Skeleton mientras transcurren los segundos de espera */}
         {cargando && ofertas.length === 0 && (
           <div className="w-full bg-white rounded-3xl border border-gray-100 p-8 text-center space-y-3 animate-pulse">
             <div className="h-6 bg-gray-200 rounded-full w-1/3 mx-auto"></div>
