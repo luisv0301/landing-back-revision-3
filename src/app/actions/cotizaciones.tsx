@@ -75,8 +75,8 @@ export async function iniciarCotizacionAction(datos: any) {
               lastname: personales.lastname.toUpperCase(),
               gender: personales.genero || "M",
               birht_date: personales.fechaNacimiento, // Mantener el typo obligatorio de Agente Motor
-              occupation: "Profesional Independiente",
-              educational_level: "none",
+              //occupation: "Profesional Independiente",
+              // educational_level: "none",
               contact_data: [
                 {
                   contact_tag: "principal",

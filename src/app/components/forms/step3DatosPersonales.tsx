@@ -30,6 +30,11 @@ interface DatosPersonales {
   cityName: string;
   vencimientoPoliza?: string;
   endosoBanco?: string;
+  esMismoAsegurado?: boolean;
+  aseguradoNombre?: string;
+  aseguradoApellidos?: string;
+  aseguradoCedula?: string;
+  aseguradoEmail?: string;
 }
 
 interface Step3Props {
@@ -63,8 +68,21 @@ export default function Step3DatosPersonales({
   const [fechaNacimiento, setFechaNacimiento] = useState(
     initialData?.fechaNacimiento || "",
   );
-  const [educationalLevel, setEducationalLevel] = useState(
-    initialData?.educationalLevel || "professional",
+
+  const [esMismoAsegurado, setEsMismoAsegurado] = useState<boolean>(
+    initialData?.esMismoAsegurado !== undefined ? initialData.esMismoAsegurado : true,
+  );
+  const [aseguradoNombre, setAseguradoNombre] = useState(
+    initialData?.aseguradoNombre || "",
+  );
+  const [aseguradoApellidos, setAseguradoApellidos] = useState(
+    initialData?.aseguradoApellidos || "",
+  );
+  const [aseguradoCedula, setAseguradoCedula] = useState(
+    initialData?.aseguradoCedula || "",
+  );
+  const [aseguradoEmail, setAseguradoEmail] = useState(
+    initialData?.aseguradoEmail || "",
   );
 
   const [vencimientoPoliza, setVencimientoPoliza] = useState("Ya mismo");
@@ -113,11 +131,25 @@ export default function Step3DatosPersonales({
       return;
     }
 
+    if (!esMismoAsegurado) {
+      if (
+        !aseguradoNombre.trim() ||
+        !aseguradoApellidos.trim() ||
+        !aseguradoCedula.trim() ||
+        !aseguradoEmail.trim()
+      ) {
+        setErrorLocal(
+          "Por favor completa los datos obligatorios del asegurado",
+        );
+        return;
+      }
+    }
+
     const partesNombre = nombreCompleto.trim().split(" ");
     const firstname = partesNombre[0] || "";
     const lastname = partesNombre.slice(1).join(" ") || partesNombre[0] || "";
 
-    const payloadPersonales = {
+    const payloadPersonales: DatosPersonales = {
       nombreCompleto,
       firstname,
       lastname,
@@ -129,6 +161,17 @@ export default function Step3DatosPersonales({
       fechaNacimiento,
       cityCode: ciudadSeleccionada.city_code,
       cityName: ciudadSeleccionada.city_name,
+      vencimientoPoliza,
+      endosoBanco,
+      esMismoAsegurado,
+      ...(esMismoAsegurado
+        ? {}
+        : {
+          aseguradoNombre,
+          aseguradoApellidos,
+          aseguradoCedula,
+          aseguradoEmail,
+        }),
     };
 
     startTransitionSubmit(async () => {
@@ -225,8 +268,8 @@ export default function Step3DatosPersonales({
               type="button"
               onClick={() => setGenero("M")}
               className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input  ${genero === "M"
-                  ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
-                  : "border-gray-200 bg-white "
+                ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
+                : "border-gray-200 bg-white "
                 }`}
             >
               Masculino
@@ -235,8 +278,8 @@ export default function Step3DatosPersonales({
               type="button"
               onClick={() => setGenero("F")}
               className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input  ${genero === "F"
-                  ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
-                  : "border-gray-200 bg-white "
+                ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
+                : "border-gray-200 bg-white "
                 }`}
             >
               Femenino
@@ -270,34 +313,71 @@ export default function Step3DatosPersonales({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Nivel Educativo *</Label>
-          <Select
-            value={educationalLevel}
-            onValueChange={(val) => setEducationalLevel(val ?? "professional")}
-          >
-            <SelectTrigger className="bg-white p-6 rounded-full w-full uppercase">
-              <SelectValue placeholder="Selecciona tu nivel educativo" />
-            </SelectTrigger>
-            <SelectContent alignItemWithTrigger={false} className="uppercase">
-              <SelectItem value="secondary">Secundaria / Bachiller</SelectItem>
-              <SelectItem value="intermediate">
-                Técnico / Tecnológico
-              </SelectItem>
-              <SelectItem value="professional">
-                Profesional / Pregrado
-              </SelectItem>
-              <SelectItem value="master">Maestría / Posgrado</SelectItem>
-              <SelectItem value="doctorate">Doctorado</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Sección Asegurado Mismo/Diferente */}
+        <div className="space-y-3 border-t border-b border-gray-100 py-4">
+          <Label className="text-sm font-semibold">
+            ¿El asegurado es la misma persona que diligencia los datos? *
+          </Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              onClick={() => setEsMismoAsegurado(true)}
+              className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input ${esMismoAsegurado
+                ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
+                : "border-gray-200 bg-white"
+                }`}
+            >
+              Sí
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setEsMismoAsegurado(false)}
+              className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input ${!esMismoAsegurado
+                ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
+                : "border-gray-200 bg-white"
+                }`}
+            >
+              No (Es otra persona)
+            </Button>
+          </div>
+
+          {!esMismoAsegurado && (
+            <div className="space-y-4  mt-2 bg-gray-50 py-6 px-4 rounded-2xl border border-gray-200">
+              <h3 className="text-sm font-bold text-gray-800">Datos de quien diligencia los datos</h3>
+              <div className="space-y-4">
+                <Label htmlFor="aseguradoNombre">Nombre completo *</Label>
+                <Input
+                  id="aseguradoNombre"
+                  value={aseguradoNombre}
+                  onChange={(e) => setAseguradoNombre(e.target.value)}
+                  placeholder="Ej: María"
+                  required={!esMismoAsegurado}
+                  className="uppercase bg-white p-6 rounded-full text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="aseguradoEmail">Email *</Label>
+                <Input
+                  id="aseguradoEmail"
+                  type="email"
+                  value={aseguradoEmail}
+                  onChange={(e) => setAseguradoEmail(e.target.value)}
+                  placeholder="asegurado@correo.com"
+                  required={!esMismoAsegurado}
+                  className="uppercase bg-white p-6 rounded-full text-sm"
+                />
+              </div>
+            </div>
+          )}
         </div>
+
 
         <div className="space-y-2 relative">
           <Label htmlFor="ciudad">Ciudad de Circulación *</Label>
           <div className="relative">
             <Input
               id="ciudad"
+              name="campo-circulacion-vehiculo-no-autofill"
               value={
                 ciudadSeleccionada
                   ? `${ciudadSeleccionada.city_name} (${ciudadSeleccionada.state_name})`
@@ -308,7 +388,10 @@ export default function Step3DatosPersonales({
                 handleSearchCiudad(e.target.value);
               }}
               placeholder="Escribe tu ciudad (ej: Cali, Bogotá)"
-              autoComplete="off"
+              autoComplete="one-time-code"
+              autoCorrect="off"
+              spellCheck={false}
+              data-form-type="other"
               required
               className="uppercase bg-white p-6 rounded-full pr-10"
             />
@@ -371,8 +454,8 @@ export default function Step3DatosPersonales({
                 type="button"
                 onClick={() => setVencimientoPoliza(op)}
                 className={`w-full text-left p-6 rounded-full border text-sm font-medium transition-all shadow-xs border-input ${vencimientoPoliza === op
-                    ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
-                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                   }`}
               >
                 {op}
@@ -393,8 +476,8 @@ export default function Step3DatosPersonales({
                 type="button"
                 onClick={() => setEndosoBanco(op.label)}
                 className={`w-full text-left p-6 rounded-full  text-sm font-medium transition-all shadow-xs border border-input ${endosoBanco === op.label
-                    ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
-                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                   }`}
               >
                 {op.label}
