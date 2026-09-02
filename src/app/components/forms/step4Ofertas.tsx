@@ -41,11 +41,6 @@ export interface OfertaPoliza {
 }
 
 interface Step4Props {
-  session?: {
-    channelName: string;
-    token?: string;
-  };
-  oppId?: string;
   vehiculoData: any;
   jsonComparativoUrl?: string;
   pdfUrl?: string;
@@ -129,8 +124,7 @@ export default function Step4Ofertas({
   const [cargando, setCargando] = useState(true);
   const [filtroActivo, setFiltroActivo] = useState<TipoFiltro>("todas");
   const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
-  const [segundosEspera, setSegundosEspera] = useState(25);
-  const [puedeReintentar, setPuedeReintentar] = useState(false);
+  const [segundosRestantes, setSegundosRestantes] = useState(25);
 
   const consultarComparativo = async () => {
     if (!jsonComparativoUrl) {
@@ -146,27 +140,25 @@ export default function Step4Ofertas({
       const res = await consultarOfertasRespaldoAction(jsonComparativoUrl);
 
       if (res.success && Array.isArray(res.ofertas) && res.ofertas.length > 0) {
-        const ofertasFormateadas = formatearPolizas(res.ofertas);
-        setOfertas(ofertasFormateadas);
+        const formateadas = formatearPolizas(res.ofertas);
+        setOfertas(formateadas);
       } else {
         setErrorConsulta(
-          "Las aseguradoras aún están procesando o no arrojaron pólizas disponibles.",
+          "Las aseguradoras no arrojaron opciones disponibles o se presentó una demora en la liquidación.",
         );
       }
     } catch (err: any) {
-      console.error("Error consultando comparativo:", err);
       setErrorConsulta(err.message || "Error al recuperar las ofertas.");
     } finally {
       setCargando(false);
-      setPuedeReintentar(true);
     }
   };
 
   useEffect(() => {
-    const timerInterval = setInterval(() => {
-      setSegundosEspera((prev) => {
+    const timer = setInterval(() => {
+      setSegundosRestantes((prev) => {
         if (prev <= 1) {
-          clearInterval(timerInterval);
+          clearInterval(timer);
           consultarComparativo();
           return 0;
         }
@@ -174,7 +166,7 @@ export default function Step4Ofertas({
       });
     }, 1000);
 
-    return () => clearInterval(timerInterval);
+    return () => clearInterval(timer);
   }, [jsonComparativoUrl]);
 
   const ofertasFiltradas = useMemo(() => {
@@ -222,23 +214,23 @@ export default function Step4Ofertas({
         </h1>
         <p className="text-gray-600 text-sm">
           {cargando
-            ? `Consolidando cotizaciones de aseguradoras para tu ${nombreVehiculo}...`
+            ? `Cotizando en simultáneo con las principales aseguradoras para tu ${nombreVehiculo}...`
             : ofertas.length > 0
-              ? `Hemos encontrado ${ofertas.length} opciones para tu ${nombreVehiculo}`
-              : `Comparativo generado para tu ${nombreVehiculo}`}
+              ? `Hemos encontrado ${ofertas.length} opciones disponibles para tu ${nombreVehiculo}`
+              : `Comparativo liquidado para tu ${nombreVehiculo}`}
         </p>
       </div>
 
+      {/* Filtros rápidos (Solo visibles cuando hay cotizaciones listas) */}
       {ofertas.length > 0 && (
         <div className="bg-white p-1.5 rounded-full border border-gray-200 shadow-sm flex items-center justify-between w-full max-w-md mb-8">
           <button
             type="button"
             onClick={() => setFiltroActivo("todas")}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1.5 ${
-              filtroActivo === "todas"
-                ? "bg-[#222222] text-white shadow-sm"
-                : "text-gray-700 hover:text-black"
-            }`}
+            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1.5 ${filtroActivo === "todas"
+              ? "bg-[#222222] text-white shadow-sm"
+              : "text-gray-700 hover:text-black"
+              }`}
           >
             <span>Todas ({ofertas.length})</span>
             {filtroActivo === "todas" && (
@@ -251,62 +243,61 @@ export default function Step4Ofertas({
           <button
             type="button"
             onClick={() => setFiltroActivo("economica")}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center ${
-              filtroActivo === "economica"
-                ? "bg-[#222222] text-white shadow-sm"
-                : "text-gray-700 hover:text-black"
-            }`}
+            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center ${filtroActivo === "economica"
+              ? "bg-[#222222] text-white shadow-sm"
+              : "text-gray-700 hover:text-black"
+              }`}
           >
-            <span>$ Más Económica</span>
+            <span className="whitespace-nowrap">$ Más Económica</span>
           </button>
 
           <button
             type="button"
             onClick={() => setFiltroActivo("cobertura")}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1 ${
-              filtroActivo === "cobertura"
-                ? "bg-[#222222] text-white shadow-sm"
-                : "text-gray-700 hover:text-black"
-            }`}
+            className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1 ${filtroActivo === "cobertura"
+              ? "bg-[#222222] text-white shadow-sm"
+              : "text-gray-700 hover:text-black"
+              }`}
           >
             <span className="text-xs">🛡️</span>
-            <span>Mejor Cobertura</span>
+            <span className="whitespace-nowrap">Mejor Cobertura</span>
           </button>
         </div>
       )}
 
+      {/* Barra de progreso / Loader visual */}
       {cargando && (
         <div className="w-full bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Loader2 className="animate-spin text-black" size={20} />
             <p className="text-xs md:text-sm font-medium text-gray-800">
-              {segundosEspera > 0
-                ? `Liquidando pólizas con las aseguradoras (tiempo estimado: ${segundosEspera}s)...`
-                : "Recuperando comparativo consolidado..."}
+              {segundosRestantes > 0
+                ? `Tarifando con aseguradoras (tiempo estimado: ${segundosRestantes}s)...`
+                : "Consolidando las mejores opciones..."}
             </p>
           </div>
         </div>
       )}
 
+      {/* Manejo de error o reintento manual */}
       {errorConsulta && !cargando && ofertas.length === 0 && (
         <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between text-amber-800">
           <div className="flex items-center space-x-2">
             <AlertCircle size={18} />
             <p className="text-sm font-medium">{errorConsulta}</p>
           </div>
-          {puedeReintentar && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={consultarComparativo}
-              className="border-amber-300 hover:bg-amber-100 text-amber-900"
-            >
-              <RefreshCw size={14} className="mr-1.5" /> Reintentar
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={consultarComparativo}
+            className="border-amber-300 hover:bg-amber-100 text-amber-900"
+          >
+            <RefreshCw size={14} className="mr-1.5" /> Reintentar
+          </Button>
         </div>
       )}
 
+      {/* Listado de Tarjetas */}
       <div className="w-full space-y-6">
         <AnimatePresence mode="popLayout">
           {ofertasFiltradas.map((item) => (
@@ -374,7 +365,7 @@ export default function Step4Ofertas({
                         Ver Coberturas y Exclusiones
                       </button>
                     }
-                  ></DialogTrigger>
+                  />
                   <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
                     <DialogHeader>
                       <DialogTitle className="text-lg font-bold text-gray-900">
@@ -408,14 +399,15 @@ export default function Step4Ofertas({
           ))}
         </AnimatePresence>
 
+        {/* Skeleton de carga inicial */}
         {cargando && ofertas.length === 0 && (
           <div className="w-full bg-white rounded-3xl border border-gray-100 p-8 text-center space-y-3 animate-pulse">
-            <div className="h-6 bg-gray-200 rounded-full w-1/3 mx-auto"></div>
-            <div className="h-4 bg-gray-100 rounded-full w-1/2 mx-auto"></div>
+            <div className="h-6 bg-gray-200 rounded-full w-1/3 mx-auto" />
+            <div className="h-4 bg-gray-100 rounded-full w-1/2 mx-auto" />
           </div>
         )}
 
-        {/* Contingencia: Descarga PDF cuando no hay ofertas directas en pantalla */}
+        {/* Fallback de PDF consolidado si no hay ofertas directas */}
         {!cargando && ofertasFiltradas.length === 0 && pdfUrl && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}

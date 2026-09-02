@@ -29,7 +29,7 @@ export default function CotizadorForm() {
     oppId?: string;
   }>({});
 
-  // Manejo de retroceso
+
   const handleBack = () => {
     if (step > 1) {
       setStep((prev) => prev - 1);
@@ -51,7 +51,7 @@ export default function CotizadorForm() {
       jsonComparativoUrl: datos.jsonComparativoUrl,
       pdfUrl: datos.pdfUrl,
     }));
-    //setStep(4);
+    setStep(4);
   };
 
   const handleSelectOferta = (ofertaElegida: any) => {
@@ -62,7 +62,6 @@ export default function CotizadorForm() {
     setStep(5);
   };
 
-  // Validación de requisitos previos para navegar a un paso
   const isStepAccessible = (targetStep: number) => {
     if (targetStep === 1) return true;
     if (targetStep === 2) return !!datosCotizacion.vehiculo;
@@ -93,11 +92,10 @@ export default function CotizadorForm() {
           <button
             onClick={handleBack}
             disabled={step === 1}
-            className={`flex items-center space-x-2 text-sm font-medium transition-colors ${
-              step === 1
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:text-black cursor-pointer"
-            }`}
+            className={`flex items-center space-x-2 text-sm font-medium transition-colors ${step === 1
+              ? "text-gray-300 cursor-not-allowed"
+              : "text-gray-600 hover:text-black cursor-pointer"
+              }`}
           >
             <ArrowLeft size={18} />
             <span>Regresar</span>
@@ -115,11 +113,10 @@ export default function CotizadorForm() {
                   type="button"
                   onClick={() => handleGoToStep(p.id)}
                   disabled={!accessible}
-                  className={`flex items-center space-x-3 text-sm font-medium transition-opacity text-left ${
-                    accessible
-                      ? "cursor-pointer"
-                      : "cursor-not-allowed opacity-60"
-                  }`}
+                  className={`flex items-center space-x-3 text-sm font-medium transition-opacity text-left ${accessible
+                    ? "cursor-pointer"
+                    : "cursor-not-allowed opacity-60"
+                    }`}
                 >
                   {isCompleted ? (
                     <CheckCircle2
@@ -156,11 +153,10 @@ export default function CotizadorForm() {
             <button
               onClick={handleBack}
               disabled={step === 1}
-              className={`p-1 rounded-full ${
-                step === 1
-                  ? "text-gray-300"
-                  : "text-gray-700 active:bg-gray-200"
-              }`}
+              className={`p-1 rounded-full ${step === 1
+                ? "text-gray-300"
+                : "text-gray-700 active:bg-gray-200"
+                }`}
             >
               <ArrowLeft size={20} />
             </button>
@@ -214,13 +210,12 @@ export default function CotizadorForm() {
                         type="button"
                         onClick={() => handleGoToStep(p.id)}
                         disabled={!accessible}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                          isCurrent
-                            ? "bg-[#FFCC00]/20 text-black font-bold"
-                            : accessible
-                              ? "text-gray-700 hover:bg-gray-50"
-                              : "text-gray-300 cursor-not-allowed"
-                        }`}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isCurrent
+                          ? "bg-[#FFCC00]/20 text-black font-bold"
+                          : accessible
+                            ? "text-gray-700 hover:bg-gray-50"
+                            : "text-gray-300 cursor-not-allowed"
+                          }`}
                       >
                         <div className="flex items-center space-x-3">
                           {isCompleted ? (
@@ -295,10 +290,8 @@ export default function CotizadorForm() {
             {step === 4 && (
               <Step4Ofertas
                 key="step4"
-                session={datosCotizacion.session}
                 vehiculoData={datosCotizacion.vehiculo}
                 jsonComparativoUrl={datosCotizacion.jsonComparativoUrl}
-                oppId={datosCotizacion.oppId}
                 onSelectOferta={handleSelectOferta}
                 pdfUrl={datosCotizacion.pdfUrl}
               />
