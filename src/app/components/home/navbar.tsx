@@ -72,7 +72,7 @@ export default function Navbar() {
                     {/* Desktop Phone Pill CTA */}
                     <a
                         href={PHONE_CONTACT.href}
-                        className="flex items-center gap-2.5 rounded-full bg-neutral-100/80 px-5 py-2.5 text-sm font-bold text-neutral-900 transition-colors duration-200 hover:bg-neutral-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                        className="flex items-center gap-2.5 rounded-full bg-neutral-100/80 px-5 py-2.5 text-sm font-bold text-neutral-900 transition-all duration-200 hover:bg-neutral-200 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
                     >
                         <PhoneIcon className="h-4 w-4 stroke-[2.5]" />
                         <span>{PHONE_CONTACT.number}</span>
@@ -85,7 +85,7 @@ export default function Navbar() {
                     <a
                         href={PHONE_CONTACT.href}
                         aria-label={`Llamar a ${PHONE_CONTACT.number}`}
-                        className="flex h-11 w-16 items-center justify-center rounded-full bg-neutral-100/90 text-neutral-900 transition-colors active:bg-neutral-200"
+                        className="flex h-11 w-16 items-center justify-center rounded-full bg-neutral-100/90 text-neutral-900 transition-all active:scale-[0.96] active:bg-neutral-200"
                     >
                         <PhoneIcon className="h-5 w-5 stroke-[2.2]" />
                     </a>
@@ -97,18 +97,18 @@ export default function Navbar() {
                         aria-controls="mobile-menu"
                         aria-label={isOpen ? "Cerrar menú principal" : "Abrir menú principal"}
                         onClick={() => setIsOpen(!isOpen)}
-                        className="flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-xl text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                        className="flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-xl text-neutral-900 transition-transform active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 cursor-pointer"
                     >
                         <span
-                            className={`h-0.5 w-6 rounded-full bg-neutral-900 transition-transform duration-300 ${isOpen ? "translate-y-2 rotate-45" : ""
+                            className={`h-0.5 w-6 rounded-full bg-neutral-900 transition-transform duration-200 ${isOpen ? "translate-y-2 rotate-45" : ""
                                 }`}
                         />
                         <span
-                            className={`h-0.5 w-6 rounded-full bg-neutral-900 transition-opacity duration-300 ${isOpen ? "opacity-0" : ""
+                            className={`h-0.5 w-6 rounded-full bg-neutral-900 transition-opacity duration-200 ${isOpen ? "opacity-0" : ""
                                 }`}
                         />
                         <span
-                            className={`h-0.5 w-6 rounded-full bg-neutral-900 transition-transform duration-300 ${isOpen ? "-translate-y-2 -rotate-45" : ""
+                            className={`h-0.5 w-6 rounded-full bg-neutral-900 transition-transform duration-200 ${isOpen ? "-translate-y-2 -rotate-45" : ""
                                 }`}
                         />
                     </button>
@@ -120,32 +120,49 @@ export default function Navbar() {
                 {isOpen && (
                     <motion.div
                         id="mobile-menu"
-                        initial={{ opacity: 0, y: -10 }}
+                        initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute top-full left-0 w-full border-b border-neutral-200/80 bg-[#FAF8F5] px-6 py-6 shadow-xl lg:hidden"
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+                        className="absolute top-full left-0 w-full border-b border-neutral-200/80 bg-[#FAF8F5]/95 backdrop-blur-md px-6 py-6 shadow-xl lg:hidden"
                     >
                         <nav aria-label="Navegación móvil">
-                            <ul className="flex flex-col gap-4 text-center">
+                            <motion.ul
+                                initial="hidden"
+                                animate="visible"
+                                variants={{
+                                    hidden: { opacity: 0 },
+                                    visible: {
+                                        opacity: 1,
+                                        transition: { staggerChildren: 0.04 },
+                                    },
+                                }}
+                                className="flex flex-col gap-3 text-center"
+                            >
                                 {NAV_LINKS.map((link) => (
-                                    <li key={link.label}>
+                                    <motion.li
+                                        key={link.label}
+                                        variants={{
+                                            hidden: { opacity: 0, y: -4 },
+                                            visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } },
+                                        }}
+                                    >
                                         <a
                                             href={link.href}
                                             onClick={() => setIsOpen(false)}
-                                            className="block py-2 text-lg font-bold text-neutral-800 transition-colors hover:text-neutral-950"
+                                            className="block py-2 text-lg font-bold text-neutral-800 transition-colors hover:text-neutral-950 active:scale-[0.98]"
                                         >
                                             {link.label}
                                         </a>
-                                    </li>
+                                    </motion.li>
                                 ))}
-                            </ul>
+                            </motion.ul>
                         </nav>
 
-                        <div className="mt-6 pt-4 border-t border-neutral-200 flex flex-col gap-3">
+                        <div className="mt-6 pt-4 border-t border-neutral-200/80 flex flex-col gap-3">
                             <a
                                 href={PHONE_CONTACT.href}
-                                className="flex items-center justify-center gap-3 rounded-full bg-neutral-100 py-3.5 text-base font-bold text-neutral-900"
+                                className="flex items-center justify-center gap-3 rounded-full bg-neutral-100 py-3.5 text-base font-bold text-neutral-900 transition-transform active:scale-[0.98]"
                             >
                                 <PhoneIcon className="h-5 w-5" />
                                 <span>{PHONE_CONTACT.number}</span>

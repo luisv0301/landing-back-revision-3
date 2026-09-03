@@ -371,15 +371,15 @@ function SelectorVehiculo({ id, label, icon, isActive, onClick }: any) {
         <button
             type="button"
             onClick={onClick}
-            className={`relative flex flex-col items-center justify-center p-4 rounded-3xl border transition-all duration-200 ${isActive
+            className={`relative flex flex-col items-center justify-center p-4 rounded-3xl border transition-all duration-150 active:scale-[0.96] cursor-pointer ${isActive
                 ? 'bg-[#222222] border-[#222222] text-white shadow-md'
-                : 'bg-white border-gray-200 text-black hover:border-gray-300'
+                : 'bg-white border-gray-200 text-black hover:border-gray-300 hover:shadow-xs'
                 }`}
         >
-            <div className="mb-2" >{icon}</div>
+            <div className="mb-2 transition-transform duration-150 group-active:scale-95">{icon}</div>
             <span className="font-semibold text-sm">{label}</span>
             {isActive && (
-                <div className="absolute top-2 right-2 bg-[#FFCC00] text-black rounded-full p-0.5">
+                <div className="absolute top-2 right-2 bg-[#FFCC00] text-black rounded-full p-0.5 animate-in fade-in zoom-in-75 duration-150">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3 h-3">
                         <polyline points="20 6 9 17 4 12" />
                     </svg>

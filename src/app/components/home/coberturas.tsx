@@ -192,10 +192,10 @@ export default function Coberturas() {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={selectedType}
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -12 }}
-                            transition={{ duration: 0.35, ease: "easeInOut" }}
+                            initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
+                            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                            exit={{ opacity: 0, y: -8, filter: "blur(2px)" }}
+                            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
                             className="grid grid-cols-1 lg:grid-cols-2"
                         >
                             {/* Left Column: Visual Illustration & Banner */}
@@ -211,7 +211,7 @@ export default function Coberturas() {
                                         alt={currentCoverage.image.alt}
                                         loading="lazy"
                                         decoding="async"
-                                        className="object-cover rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:w-auto lg:object-right"
+                                        className="aspect-4/3 object-right lg:aspect-none object-cover rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:w-auto"
                                     />
                                 </picture>
                             </div>

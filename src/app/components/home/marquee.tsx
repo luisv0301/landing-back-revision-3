@@ -15,12 +15,12 @@ export default function Marquee({
     return (
         <section
             aria-label="Aseguradoras aliadas"
-            className="relative w-full overflow-hidden bg-[#FAF8F5] border-y border-neutral-200/80"
+            className="relative w-full overflow-hidden bg-white border-y border-neutral-200/80"
         >
             {/* Máscara de desvanecimiento en los extremos laterales */}
-            <div className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+            <div className="relative w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
                 <motion.div
-                    className={`flex w-max items-center ${pauseOnHover ? "hover:[animation-play-state:paused]" : ""
+                    className={`flex w-max items-center ${pauseOnHover ? "hover:paused" : ""
                         }`}
                     animate={{ x: ["0%", "-50%"] }}
                     transition={{

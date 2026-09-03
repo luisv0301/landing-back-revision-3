@@ -169,18 +169,25 @@ function OfertasFiltros({
   onSelectFiltro: (filtro: TipoFiltro) => void;
 }) {
   return (
-    <div className="bg-white p-1.5 rounded-full border border-gray-200 shadow-xs flex items-center justify-between w-full max-w-md mb-8">
+    <div className="relative bg-white p-1.5 rounded-full border border-gray-200 shadow-xs flex items-center justify-between w-full max-w-md mb-8">
       <button
         type="button"
         onClick={() => onSelectFiltro("todas")}
-        className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${filtroActivo === "todas"
-          ? "bg-[#222222] text-white shadow-xs"
+        className={`relative z-10 flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-colors duration-150 flex items-center justify-center space-x-1.5 cursor-pointer active:scale-[0.98] ${filtroActivo === "todas"
+          ? "text-white"
           : "text-gray-700 hover:text-black"
           }`}
       >
+        {filtroActivo === "todas" && (
+          <motion.div
+            layoutId="activeFilterPill"
+            className="absolute inset-0 rounded-full bg-[#222222] shadow-xs z-[-1]"
+            transition={{ type: "spring", stiffness: 450, damping: 35 }}
+          />
+        )}
         <span className="whitespace-nowrap text-[10px] lg:text-sm">Todas ({totalOfertas})</span>
         {filtroActivo === "todas" && (
-          <div className="bg-[#FFCC00] text-black rounded-full p-0.5">
+          <div className="bg-[#FFCC00] text-black rounded-full p-0.5 animate-in fade-in zoom-in-75 duration-150">
             <Check size={10} strokeWidth={3} />
           </div>
         )}
@@ -189,22 +196,36 @@ function OfertasFiltros({
       <button
         type="button"
         onClick={() => onSelectFiltro("economica")}
-        className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center cursor-pointer ${filtroActivo === "economica"
-          ? "bg-[#222222] text-white shadow-xs"
+        className={`relative z-10 flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-colors duration-150 flex items-center justify-center cursor-pointer active:scale-[0.98] ${filtroActivo === "economica"
+          ? "text-white"
           : "text-gray-700 hover:text-black"
           }`}
       >
+        {filtroActivo === "economica" && (
+          <motion.div
+            layoutId="activeFilterPill"
+            className="absolute inset-0 rounded-full bg-[#222222] shadow-xs z-[-1]"
+            transition={{ type: "spring", stiffness: 450, damping: 35 }}
+          />
+        )}
         <span className="whitespace-nowrap text-[10px] lg:text-sm">$ Más Económica</span>
       </button>
 
       <button
         type="button"
         onClick={() => onSelectFiltro("cobertura")}
-        className={`flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-all flex items-center justify-center space-x-1 cursor-pointer ${filtroActivo === "cobertura"
-          ? "bg-[#222222] text-white shadow-xs"
+        className={`relative z-10 flex-1 py-2.5 px-4 rounded-full text-xs md:text-sm font-semibold transition-colors duration-150 flex items-center justify-center space-x-1 cursor-pointer active:scale-[0.98] ${filtroActivo === "cobertura"
+          ? "text-white"
           : "text-gray-700 hover:text-black"
           }`}
       >
+        {filtroActivo === "cobertura" && (
+          <motion.div
+            layoutId="activeFilterPill"
+            className="absolute inset-0 rounded-full bg-[#222222] shadow-xs z-[-1]"
+            transition={{ type: "spring", stiffness: 450, damping: 35 }}
+          />
+        )}
         <span className="text-xs">🛡️</span>
         <span className="whitespace-nowrap text-[10px] lg:text-sm">Mejor Cobertura</span>
       </button>

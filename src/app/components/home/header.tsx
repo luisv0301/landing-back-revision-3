@@ -1,6 +1,7 @@
 "use client"
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 import gsap from "gsap";
@@ -17,9 +18,8 @@ export default function HomeHeader() {
 
     useGSAP(
         () => {
-
             const tl = gsap.timeline({
-                defaults: { ease: "power3.out", duration: 0.8 },
+                defaults: { ease: "power3.out", duration: 0.45 },
             });
 
             tl.to(titleRef.current, {
@@ -35,7 +35,7 @@ export default function HomeHeader() {
                     opacity: 1,
                     filter: "blur(0px)"
                 },
-                "-=0.5"
+                "-=0.25"
             );
         },
         { scope: containerRef }
@@ -48,36 +48,48 @@ export default function HomeHeader() {
                     <h1 className="text-4xl text-pretty font-bold tracking-tight opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={titleRef}>Protege tu carro con el mejor todo riesgo del mercado</h1>
                     <p className="mt-4 text-center lg:text-start mx-auto lg:mx-0 max-w-[44ch] opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={textRef}>Analizamos entre 13+ aseguradoras y te acompañamos hasta que tu carro quede protegido - <b>sin letra pequeña.</b> </p>
                     <div className="hidden space-y-4 lg:block">
-                        <div className="flex gap-2.5">
-                            <Button
+                        <div className="relative flex gap-2.5 p-1 bg-white rounded-3xl border border-neutral-200">
+                            <button
                                 type="button"
                                 onClick={() => setTipoSeleccionado("carro")}
-                                className={`py-3.5 px-5 rounded-2xl grow min-h-20 transition-all cursor-pointer ${tipoSeleccionado === "carro"
-                                    ? "bg-black text-white hover:bg-neutral-900"
-                                    : "bg-white text-black hover:bg-neutral-100"
+                                className={`relative z-10 flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl grow min-h-20 font-semibold transition-colors duration-200 cursor-pointer ${tipoSeleccionado === "carro" ? "text-white" : "text-black hover:text-neutral-700"
                                     }`}
                             >
+                                {tipoSeleccionado === "carro" && (
+                                    <motion.div
+                                        layoutId="headerVehicleTabDesktop"
+                                        className="absolute inset-0 rounded-2xl bg-black shadow-md z-[-1]"
+                                        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                                    />
+                                )}
                                 <img src="/images/carro.svg" alt="" className="max-w-12" />
                                 <span>Carro</span>
-                            </Button>
-                            <Button
+                            </button>
+
+                            <button
                                 type="button"
                                 onClick={() => setTipoSeleccionado("moto")}
-                                className={`py-3.5 px-5 rounded-2xl grow min-h-20 transition-all cursor-pointer ${tipoSeleccionado === "moto"
-                                    ? "bg-black text-white hover:bg-neutral-900"
-                                    : "bg-white text-black hover:bg-neutral-100"
+                                className={`relative z-10 flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl grow min-h-20 font-semibold transition-colors duration-200 cursor-pointer ${tipoSeleccionado === "moto" ? "text-white" : "text-black hover:text-neutral-700"
                                     }`}
                             >
+                                {tipoSeleccionado === "moto" && (
+                                    <motion.div
+                                        layoutId="headerVehicleTabDesktop"
+                                        className="absolute inset-0 rounded-2xl bg-black shadow-md z-[-1]"
+                                        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                                    />
+                                )}
                                 <img src="/images/moto.svg" alt="" className="max-w-12" />
                                 <span>Moto</span>
-                            </Button>
+                            </button>
                         </div>
 
                         <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="hidden lg:block">
                             <Button
-                                className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold sm:text-lg transition-all duration-200 hover:bg-yellow-500 active:scale-[0.99] cursor-pointer"
-                            > Quiero cotizar mi seguro gratis</Button>
-
+                                className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold sm:text-lg transition-all duration-200 hover:bg-yellow-500 active:scale-[0.98] cursor-pointer shadow-xs hover:shadow-md"
+                            >
+                                Quiero cotizar mi seguro gratis
+                            </Button>
                         </Link>
 
                         <p className="text-sm text-neutral-500 text-center">Sin costo sin compromiso. Te contactamos por WhatsApp</p>
@@ -104,38 +116,46 @@ export default function HomeHeader() {
                             <span className="font-bold text-lg text-neutral-400">3.558 reviews</span>
                             <span className="font-bold text-lg">4.9 en Google</span>
                         </div>
-
-
                     </div>
-                    <div className="flex gap-0.5 lg:hidden">
-                        <Button
+
+                    <div className="relative flex gap-1 p-1 bg-neutral-100 rounded-3xl border border-neutral-200 lg:hidden">
+                        <button
                             type="button"
                             onClick={() => setTipoSeleccionado("carro")}
-                            className={`py-2 px-5 rounded-2xl grow min-h-16 transition-all cursor-pointer ${tipoSeleccionado === "carro"
-                                ? "bg-black text-white hover:bg-neutral-900"
-                                : "bg-white text-black hover:bg-neutral-100"
+                            className={`relative z-10 flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl grow min-h-16 font-semibold transition-colors duration-200 cursor-pointer ${tipoSeleccionado === "carro" ? "text-white" : "text-black hover:text-neutral-700"
                                 }`}
                         >
-                            <img src="/images/carro.svg" alt="" className="max-w-12" />
+                            {tipoSeleccionado === "carro" && (
+                                <motion.div
+                                    layoutId="headerVehicleTabMobile"
+                                    className="absolute inset-0 rounded-2xl bg-black shadow-md z-[-1]"
+                                    transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                                />
+                            )}
+                            <img src="/images/carro.svg" alt="" className="max-w-10" />
                             <span>Carro</span>
-                        </Button>
-                        <Button
+                        </button>
+                        <button
                             type="button"
                             onClick={() => setTipoSeleccionado("moto")}
-                            className={`py-2 px-5 rounded-2xl grow min-h-16 transition-all cursor-pointer ${tipoSeleccionado === "moto"
-                                ? "bg-black text-white hover:bg-neutral-900"
-                                : "bg-white text-black hover:bg-neutral-100"
+                            className={`relative z-10 flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl grow min-h-16 font-semibold transition-colors duration-200 cursor-pointer ${tipoSeleccionado === "moto" ? "text-white" : "text-black hover:text-neutral-700"
                                 }`}
                         >
-                            <img src="/images/moto.svg" alt="" className="max-w-12" />
+                            {tipoSeleccionado === "moto" && (
+                                <motion.div
+                                    layoutId="headerVehicleTabMobile"
+                                    className="absolute inset-0 rounded-2xl bg-black shadow-md z-[-1]"
+                                    transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                                />
+                            )}
+                            <img src="/images/moto.svg" alt="" className="max-w-10" />
                             <span>Moto</span>
-                        </Button>
+                        </button>
                     </div>
-
 
                     <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="lg:hidden">
                         <Button
-                            className="py-5 px-6 rounded-full text-black w-full min-h-14 cursor-pointer"
+                            className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold transition-all duration-200 hover:bg-yellow-500 active:scale-[0.98] cursor-pointer shadow-xs"
                         >Quiero cotizar mi seguro gratis</Button>
                     </Link>
 
