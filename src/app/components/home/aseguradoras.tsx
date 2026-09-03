@@ -67,14 +67,14 @@ const containerVariants: Variants = {
 };
 
 const itemVariants: Variants = {
-    hidden: { opacity: 0, scale: 0.95, y: 10 },
+    hidden: { opacity: 0, scale: 0.96, y: 8 },
     visible: {
         opacity: 1,
         scale: 1,
         y: 0,
         transition: {
-            duration: 0.35,
-            ease: [0.16, 1, 0.3, 1],
+            duration: 0.28,
+            ease: [0.23, 1, 0.32, 1],
         },
     },
 };
@@ -85,22 +85,23 @@ export function InsurerGrid({ insurers }: InsurerGridProps) {
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true, margin: "-40px" }}
             className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4"
         >
             {insurers.map((insurer) => (
                 <motion.li
                     key={insurer.id}
                     variants={itemVariants}
-                    whileHover={{ y: -3, transition: { duration: 0.2 } }}
-                    className={`flex h-20 sm:h-24 w-full items-center justify-center rounded-2xl border border-neutral-300 bg-white px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-md ${insurer.id === "solidaria" && "lg:col-start-2"} ${insurer.id === "mundial" && "lg:col-start-3"} ${insurer.id === "equidad" && "lg:col-start-4"}`}
+                    whileHover={{ y: -3, scale: 1.02, transition: { duration: 0.18, ease: [0.23, 1, 0.32, 1] } }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex h-20 sm:h-24 w-full items-center justify-center rounded-2xl border border-neutral-300 bg-white px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-md cursor-default select-none ${insurer.id === "solidaria" && "lg:col-start-2"} ${insurer.id === "mundial" && "lg:col-start-3"} ${insurer.id === "equidad" && "lg:col-start-4"}`}
                 >
                     <img
                         src={insurer.logo}
                         alt={`Logo de ${insurer.name}`}
                         loading="lazy"
                         decoding="async"
-                        className="max-h-10 sm:max-h-12 w-auto max-w-[85%] object-contain select-none"
+                        className="max-h-10 sm:max-h-12 w-auto max-w-[85%] object-contain select-none transition-transform duration-200"
                     />
                 </motion.li>
             ))}

@@ -56,20 +56,20 @@ const containerVariants: Variants = {
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.15,
-            delayChildren: 0.1,
+            staggerChildren: 0.06,
+            delayChildren: 0.05,
         },
     },
 };
 
 const cardVariants: Variants = {
-    hidden: { opacity: 0, y: 24 },
+    hidden: { opacity: 0, y: 16 },
     visible: {
         opacity: 1,
         y: 0,
         transition: {
-            duration: 0.5,
-            ease: [0.22, 1, 0.36, 1],
+            duration: 0.32,
+            ease: [0.23, 1, 0.32, 1],
         },
     },
 };
@@ -101,13 +101,14 @@ export default function ComoFunciona() {
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="visible"
-                    viewport={{ once: true, margin: "-50px" }}
+                    viewport={{ once: true, margin: "-40px" }}
                 >
                     {HOW_IT_WORKS_STEPS.map((step) => (
                         <motion.li
                             key={step.id}
                             variants={cardVariants}
-                            className="flex flex-col overflow-hidden rounded-4xl bg-white shadow-sm"
+                            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                            className="flex flex-col overflow-hidden rounded-4xl bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
                         >
 
                             <div className="relative flex flex-col justify-between bg-[#FFF6D4] p-6 pb-4 rounded-b-4xl">
