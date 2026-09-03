@@ -31,37 +31,19 @@ export async function iniciarCotizacionAction(datos: any) {
   try {
     const token = await obtenerTokenAgenteMotor();
     const tenant = process.env.AGENTE_MOTOR_TENANT;
-    const sessionUuid = crypto.randomUUID().replaceAll("-", "");
-    const fallbackChannelName = `landing_${sessionUuid}@${tenant}`;
-
     const { vehiculo, personales } = datos;
 
-    console.log("DATOS DE VEHICULO PERSONALES: ", vehiculo, personales);
-
-    const emailContacto =
-      process.env.NODE_ENV === "production"
-        ? personales.email
-        : "test@agentemotor.com";
-
+    const emailContacto = process.env.NODE_ENV === "production" ? personales.email : "test@agentemotor.com";
     const rawPhone = (personales.telefono || "").replace(/\D/g, "");
-    const formattedPhone = rawPhone.startsWith("57")
-      ? `+${rawPhone}`
-      : `+57${rawPhone}`;
-
-    const callbackUrl =
-      "https://xjqpsc98-3000.use2.devtunnels.ms/api/webhook/agentemotor";
+    const formattedPhone = rawPhone.startsWith("57") ? `+${rawPhone}` : `+57${rawPhone}`;
 
     const payloadQuotation = {
       name: "event-create-quote",
       tenant_data: {
         name: tenant,
-        user_mail:
-          process.env.AGENTE_MOTOR_USER_MAIL || "Intercolseguros@gmail.com",
+        user_mail: process.env.AGENTE_MOTOR_USER_MAIL || "Intercolseguros@gmail.com",
       },
-      callback: {
-        url_callback: callbackUrl,
-        callback_param: fallbackChannelName,
-      },
+
       data: {
         business_line: "vehiculos",
         insurable_objects: [
@@ -70,9 +52,7 @@ export async function iniciarCotizacionAction(datos: any) {
             vehicle: {
               plate: vehiculo.esCeroKm ? "" : vehiculo.placa || "",
               model: Number(vehiculo.modelo),
-              codification: {
-                code: vehiculo.fasecoldaCode,
-              },
+              codification: { code: vehiculo.fasecoldaCode },
               vehicle_risk: {
                 accesories_price: "0",
                 in_agency: Boolean(vehiculo.esCeroKm),
@@ -94,9 +74,9 @@ export async function iniciarCotizacionAction(datos: any) {
               firstname: personales.firstname.toUpperCase(),
               lastname: personales.lastname.toUpperCase(),
               gender: personales.genero || "M",
-              birht_date: personales.fechaNacimiento,
-              occupation: "Profesional Independiente",
-              educational_level: "none",
+              birht_date: personales.fechaNacimiento, // Mantener el typo obligatorio de Agente Motor
+              //occupation: "Profesional Independiente",
+              // educational_level: "none",
               contact_data: [
                 {
                   contact_tag: "principal",
@@ -105,10 +85,7 @@ export async function iniciarCotizacionAction(datos: any) {
                     phone: formattedPhone,
                     ubication: {
                       address_line1: "",
-                      place: {
-                        city_code: personales.cityCode || "76001",
-                        country_code: "170",
-                      },
+                      place: { city_code: personales.cityCode || "76001", country_code: "170" },
                     },
                   },
                 },
@@ -116,56 +93,26 @@ export async function iniciarCotizacionAction(datos: any) {
             },
           },
         ],
-        ubication: {
-          place: {
-            city_code: personales.cityCode || "76001",
-            country_code: "170",
-          },
-        },
+        ubication: { place: { city_code: personales.cityCode || "76001", country_code: "170" } },
       },
     };
 
-    console.log(
-      "PAYLOAD QUOTATION: ",
-      JSON.stringify(payloadQuotation, null, 2),
-    );
-
-    const resQuote = await fetch(
-      "https://quotations.agentemotor.com/app/co/customers/quotation",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payloadQuotation),
-        cache: "no-store",
-      },
-    );
+    const resQuote = await fetch("https://apipro.agentemotor.com/app/co/customers/quotation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payloadQuotation),
+      cache: "no-store",
+    });
 
     if (!resQuote.ok) {
-      const errorData = await resQuote.json().catch(() => null);
-
-      console.error(
-        "Detalle del error 400 de AgenteMotor:",
-        JSON.stringify(errorData, null, 2),
-      );
-
-      return {
-        success: false,
-        error: "No se pudieron consultar las aseguradoras.",
-      };
+      return { success: false, error: "No se pudieron consultar las aseguradoras." };
     }
 
     const responseJson = await resQuote.json();
 
-    const realChannelName =
-      responseJson.callback?.channel_name || fallbackChannelName;
-
     return {
       success: true,
       oppId: responseJson.opp_id,
-      channelName: realChannelName,
       jsonComparativoUrl: responseJson.json_comparativo,
       pdfUrl: responseJson.url_pdf_comparativo,
       token,

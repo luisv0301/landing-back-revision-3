@@ -1,21 +1,70 @@
+export async function GET() {
+  return new Response("Webhook activo y escuchando", { status: 200 });
+}
+
 export async function POST(req: Request) {
+  let body;
+
   try {
-    const body = await req.json();
-    console.log(
-      ">>> EVENTO RECIBIDO EN WEBHOOK:",
-      JSON.stringify(body, null, 2),
+    body = await req.json();
+  } catch (err: any) {
+    console.error(
+      ">>> ⚠️ ERROR PARSEANDO JSON (Payload muy grande o corrupto).",
     );
-    const eventName = body.event_name || body.name;
 
-    console.log(`>>> TIPO DE EVENTO: ${eventName}`);
+    return new Response(
+      JSON.stringify({ received: true, status: "parse_error" }),
+      { status: 200 },
+    );
+  }
 
-    if (eventName === "policy_list" || body.offers || body.data?.products) {
-      console.log(">>> ¡OFERTAS APROBADAS RECIBIDAS EN EL WEBHOOK!");
-      console.log(JSON.stringify(body, null, 2));
+  try {
+    console.log(">>> EVENTO RECIBIDO (RAW):", body);
+
+    const extraerOfertas = (payload: any): any[] => {
+      let posiblesOfertas: any[] = [];
+      if (Array.isArray(payload)) posiblesOfertas = payload;
+      else if (payload?.data && Array.isArray(payload.data))
+        posiblesOfertas = payload.data;
+      else if (payload?.data?.groups && Array.isArray(payload.data.groups))
+        posiblesOfertas = payload.data.groups;
+      else if (payload?.payload && Array.isArray(payload.payload))
+        posiblesOfertas = payload.payload;
+
+      return posiblesOfertas.filter(
+        (item) =>
+          item?.products ||
+          item?.id_db ||
+          item?.total_price ||
+          item?.document_reference,
+      );
+    };
+
+    const ofertasValidas = extraerOfertas(body);
+    const nombresExitosos = [
+      "policy_list",
+      "policy-list",
+      "update-policy",
+      "update-view-status",
+    ];
+
+    let esEventoExitoso = false;
+    let eventName = "ARRAY_PAYLOAD";
+
+    if (!Array.isArray(body)) {
+      eventName = body?.event_name || body?.name || "SIN_NOMBRE";
+      if (nombresExitosos.includes(eventName)) esEventoExitoso = true;
     }
 
-    return new Response(JSON.stringify({ received: true }), { status: 200 });
-  } catch (err) {
-    return new Response("Error", { status: 400 });
+    if (ofertasValidas.length > 0 || esEventoExitoso) {
+      console.log(
+        `>>> OFERTAS APROBADAS ENCONTRADAS (${ofertasValidas.length})`,
+      );
+    }
+  } catch (err: any) {
+    console.error(">>> ERROR LÓGICO EN WEBHOOK:", err.message);
   }
+
+  // Siempre responder 200 al final
+  return new Response(JSON.stringify({ received: true }), { status: 200 });
 }

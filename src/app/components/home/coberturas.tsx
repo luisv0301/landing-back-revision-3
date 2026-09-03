@@ -263,7 +263,7 @@ export default function Coberturas() {
                                 <div className="mt-10">
                                     <a
                                         href="#cotizar"
-                                        className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold  transition-all duration-200 hover:bg-[#e6bd00] hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
+                                        className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold  transition-all duration-200 hover:bg-[#e6bd00] focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
                                     >
                                         Cotizar tu Seguro
                                     </a>

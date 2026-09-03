@@ -11,15 +11,19 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Car, Bike, Truck } from 'lucide-react';
+import { Car, Bike, Truck, ChevronLeft } from 'lucide-react';
 import { div } from 'motion/react-client';
 import { USOS_VEHICULO_PESADO } from '@/lib/constantes';
 
-export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => void }) {
-    const [esCeroKm, setEsCeroKm] = useState(false);
-    const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>('carro');
-    const [usoPesado, setUsoPesado] = useState<string>('carga_transporte_mercancia_propia');
+interface Step1CotizaProps {
+    onSuccess: (data: any) => void;
+    initialTipo?: 'carro' | 'moto' | 'pesado';
+}
 
+export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1CotizaProps) {
+    const [esCeroKm, setEsCeroKm] = useState(false);
+    const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>(initialTipo);
+    const [usoPesado, setUsoPesado] = useState<string>('carga_transporte_mercancia_propia');
 
     const [marcas, setMarcas] = useState<string[]>([]);
     const [referencias, setReferencias] = useState<string[]>([]);
@@ -30,6 +34,12 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
     const [refSel, setRefSel] = useState('');
     const [versionSel, setVersionSel] = useState('');
     const [precioFactura, setPrecioFactura] = useState('');
+
+    const [aceptaHabeasData, setAceptaHabeasData] = useState(false);
+    const [errorHabeasData, setErrorHabeasData] = useState(false);
+    const [noEncuentraVehiculo, setNoEncuentraVehiculo] = useState(false);
+    const [archivoFactura, setArchivoFactura] = useState<File | null>(null);
+    const [facturaEnviada, setFacturaEnviada] = useState(false);
 
     const [isPendingCatalog, startTransition] = useTransition();
 
@@ -43,8 +53,25 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
     }, null);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        if (!aceptaHabeasData) {
+            e.preventDefault();
+            setErrorHabeasData(true);
+            return;
+        }
+        setErrorHabeasData(false);
+
         if (esCeroKm) {
             e.preventDefault();
+
+            if (noEncuentraVehiculo) {
+                if (!archivoFactura) {
+                    alert("Por favor selecciona una foto o PDF de la factura.");
+                    return;
+                }
+                setFacturaEnviada(true);
+                alert("Factura enviada con éxito. Un agente de Segurautos te contactará a la brevedad.");
+                return;
+            }
 
             const versionObjeto = versiones.find((v) => v.code === versionSel);
 
@@ -79,7 +106,11 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
 
     const handleToggleCeroKm = (checked: boolean) => {
         setEsCeroKm(checked);
-
+        if (!checked) {
+            setNoEncuentraVehiculo(false);
+            setArchivoFactura(null);
+            setFacturaEnviada(false);
+        }
 
         if (checked && marcas.length === 0) {
             startTransition(async () => {
@@ -195,77 +226,139 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
                 ) : (
                     /* FLUJO CASCADA PARA 0 KM */
                     <div className="space-y-6">
-                        <input type="hidden" name="fasecoldaCode" value={versionSel} />
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setNoEncuentraVehiculo(!noEncuentraVehiculo);
+                                setFacturaEnviada(false);
+                            }}
+                            className="flex gap-1 items-center text-xs text-yellow-600 hover:text-yellow-700 underline font-medium cursor-pointer"
+                        >
+                            {noEncuentraVehiculo
+                                ? <><ChevronLeft /> Volver al buscador de vehículos</>
+                                : "¿No encuentras tu vehículo? Haz clic aquí para adjuntar tu factura"}
+                        </button>
 
-                        <div className="space-y-2">
-                            <Label>Año Modelo</Label>
-                            <Select value={modeloSel} onValueChange={(val) => setModeloSel(val ?? '')} name="modelo" >
-                                <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Modelo" /></SelectTrigger>
-                                <SelectContent alignItemWithTrigger={false}>
-                                    <SelectItem value="2026">2026</SelectItem>
-                                    <SelectItem value="2025">2025</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
 
-                        <div className='space-y-2'>
-                            <Label>Marca</Label>
-                            <Select value={marcaSel} onValueChange={handleMarcaChange} disabled={isPendingCatalog} >
-                                <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Marca" /></SelectTrigger>
-                                <SelectContent alignItemWithTrigger={false} >
-                                    {marcas.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {marcaSel && (
-                            <div className='space-y-2'>
-                                <Label>Línea / Referencia</Label>
-                                <Select value={refSel} onValueChange={handleRefChange} disabled={isPendingCatalog}>
-                                    <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Línea" /></SelectTrigger>
-                                    <SelectContent alignItemWithTrigger={false} >
-                                        {referencias.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                        {noEncuentraVehiculo ? (
+                            <div className="space-y-4 p-4 bg-white rounded-2xl border border-gray-200">
+                                <Label htmlFor="facturaFile">
+                                    Adjunta la foto o PDF de la factura del vehículo *
+                                </Label>
+                                <Input
+                                    id="facturaFile"
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => setArchivoFactura(e.target.files?.[0] || null)}
+                                    className="px-0 border-0 shadow-[0] file:mr-4 file:rounded-full file:border-0 file:bg-yellow-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-yellow-600 hover:file:bg-yellow-100"
+                                />
+                                <p className="text-xs text-gray-600 leading-relaxed">
+                                    Un agente de Segurautos revisará tu factura y te contactará manualmente para procesar tu cotización.
+                                </p>
+                                {facturaEnviada && (
+                                    <div className="p-3 bg-green-100 border border-green-300 text-green-800 text-xs rounded-xl font-medium text-center">
+                                        ✓ Factura enviada con éxito. Un agente de Segurautos te contactará a la brevedad.
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        ) : (
+                            <>
+                                <input type="hidden" name="fasecoldaCode" value={versionSel} />
 
-                        {refSel && (
-                            <div className='space-y-2'>
-                                <Label>Versión Exacta</Label>
-                                <Select value={versionSel} onValueChange={(val) => setVersionSel(val ?? '')} disabled={isPendingCatalog}>
-                                    <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Versión" /></SelectTrigger>
-                                    <SelectContent alignItemWithTrigger={false} >
-                                        {versiones.map((v) => (
-                                            <SelectItem key={v.code} value={v.code}>
-                                                {v.lineaCompleta}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                                <div className="space-y-2">
+                                    <Label>Año Modelo</Label>
+                                    <Select value={modeloSel} onValueChange={(val) => setModeloSel(val ?? '')} name="modelo" >
+                                        <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Modelo" /></SelectTrigger>
+                                        <SelectContent alignItemWithTrigger={false}>
+                                            <SelectItem value="2026">2026</SelectItem>
+                                            <SelectItem value="2025">2025</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                        {versionSel && (
-                            <div className="space-y-2">
-                                <Label htmlFor="commercialPrice">Valor del vehículo en factura ($)</Label>
-                                <Input id="commercialPrice"
-                                    name="commercialPrice"
-                                    type="number"
-                                    value={precioFactura}
-                                    onChange={(e) => setPrecioFactura(e.target.value)}
-                                    placeholder="Ej: 85000000"
-                                    required
-                                    className="uppercase bg-white p-6 rounded-full" />
-                            </div>
+                                <div className='space-y-2'>
+                                    <Label>Marca</Label>
+                                    <Select value={marcaSel} onValueChange={handleMarcaChange} disabled={isPendingCatalog} >
+                                        <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Marca" /></SelectTrigger>
+                                        <SelectContent alignItemWithTrigger={false} >
+                                            {marcas.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {marcaSel && (
+                                    <div className='space-y-2'>
+                                        <Label>Línea / Referencia</Label>
+                                        <Select value={refSel} onValueChange={handleRefChange} disabled={isPendingCatalog}>
+                                            <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Línea" /></SelectTrigger>
+                                            <SelectContent alignItemWithTrigger={false} >
+                                                {referencias.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+
+                                {refSel && (
+                                    <div className='space-y-2'>
+                                        <Label>Versión Exacta</Label>
+                                        <Select value={versionSel} onValueChange={(val) => setVersionSel(val ?? '')} disabled={isPendingCatalog}>
+                                            <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Versión" /></SelectTrigger>
+                                            <SelectContent alignItemWithTrigger={false} >
+                                                {versiones.map((v) => (
+                                                    <SelectItem key={v.code} value={v.code}>
+                                                        {v.lineaCompleta}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+
+                                {versionSel && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="commercialPrice">Valor del vehículo en factura ($)</Label>
+                                        <Input id="commercialPrice"
+                                            name="commercialPrice"
+                                            type="number"
+                                            value={precioFactura}
+                                            onChange={(e) => setPrecioFactura(e.target.value)}
+                                            placeholder="Ej: 85000000"
+                                            required
+                                            className="uppercase bg-white p-6 rounded-full" />
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
 
+                {/* Aceptación de Habeas Data */}
+                <div className="space-y-1 pt-2">
+                    <div className="flex items-start space-x-2">
+                        <Checkbox
+                            id="habeasData"
+                            checked={aceptaHabeasData}
+                            onCheckedChange={(checked) => {
+                                setAceptaHabeasData(!!checked);
+                                if (checked) setErrorHabeasData(false);
+                            }}
+                            className="mt-0.5 rounded-md bg-white border-gray-300"
+                        />
+                        <Label htmlFor="habeasData" className="inline-block text-xs text-gray-600 leading-tight cursor-pointer">
+                            Acepto la <a href="/politicas" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-black">política de tratamiento de datos personales</a> y los términos y condiciones. *
+                        </Label>
+                    </div>
+                    {errorHabeasData && (
+                        <p className="text-xs text-red-500 font-medium pl-6">
+                            Debes aceptar la política de tratamiento de datos para continuar.
+                        </p>
+                    )}
+                </div>
+
                 {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
 
                 <Button type="submit" disabled={isPending} className="w-full  hover:bg-yellow-500 text-black rounded-full p-6">
-                    {isPending ? 'Procesando...' : 'Ver ofertas disponibles'}
+                    {isPending ? 'Procesando...' : (esCeroKm && noEncuentraVehiculo ? 'Enviar factura' : 'Ver ofertas disponibles')}
                 </Button>
             </form>
         </div>
