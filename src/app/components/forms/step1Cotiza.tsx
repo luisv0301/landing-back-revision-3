@@ -15,9 +15,14 @@ import { Car, Bike, Truck, ChevronLeft } from 'lucide-react';
 import { div } from 'motion/react-client';
 import { USOS_VEHICULO_PESADO } from '@/lib/constantes';
 
-export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => void }) {
+interface Step1CotizaProps {
+    onSuccess: (data: any) => void;
+    initialTipo?: 'carro' | 'moto' | 'pesado';
+}
+
+export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1CotizaProps) {
     const [esCeroKm, setEsCeroKm] = useState(false);
-    const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>('carro');
+    const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>(initialTipo);
     const [usoPesado, setUsoPesado] = useState<string>('carga_transporte_mercancia_propia');
 
     const [marcas, setMarcas] = useState<string[]>([]);
@@ -237,7 +242,7 @@ export default function Step1Cotiza({ onSuccess }: { onSuccess: (data: any) => v
 
                         {noEncuentraVehiculo ? (
                             <div className="space-y-4 p-4 bg-white rounded-2xl border border-gray-200">
-                                <Label htmlFor="facturaFile" className="text-sm font-semibold text-gray-800">
+                                <Label htmlFor="facturaFile">
                                     Adjunta la foto o PDF de la factura del vehículo *
                                 </Label>
                                 <Input

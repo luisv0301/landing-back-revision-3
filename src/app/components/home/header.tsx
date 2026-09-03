@@ -1,13 +1,15 @@
 "use client"
+import { useState, useRef } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
 
 gsap.registerPlugin(useGSAP);
 
 export default function HomeHeader() {
+    const [tipoSeleccionado, setTipoSeleccionado] = useState<"carro" | "moto">("carro");
 
     const containerRef = useRef<HTMLElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
@@ -47,11 +49,38 @@ export default function HomeHeader() {
                     <p className="mt-4 text-center lg:text-start mx-auto lg:mx-0 max-w-[44ch] opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={textRef}>Analizamos entre 13+ aseguradoras y te acompañamos hasta que tu carro quede protegido - <b>sin letra pequeña.</b> </p>
                     <div className="hidden space-y-4 lg:block">
                         <div className="flex gap-2.5">
-                            <Button className="py-3.5 px-5 rounded-2xl grow bg-black min-h-20 hover:text-black"><img src="/images/carro.svg" alt="" className="max-w-12" /> <span>Carro</span></Button>
-                            <Button className="py-3.5 px-5 rounded-2xl grow bg-white text-black min-h-20"><img src="/images/moto.svg" alt="" className="max-w-12" /> <span>Moto</span></Button>
+                            <Button
+                                type="button"
+                                onClick={() => setTipoSeleccionado("carro")}
+                                className={`py-3.5 px-5 rounded-2xl grow min-h-20 transition-all cursor-pointer ${tipoSeleccionado === "carro"
+                                    ? "bg-black text-white hover:bg-neutral-900"
+                                    : "bg-white text-black hover:bg-neutral-100"
+                                    }`}
+                            >
+                                <img src="/images/carro.svg" alt="" className="max-w-12" />
+                                <span>Carro</span>
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() => setTipoSeleccionado("moto")}
+                                className={`py-3.5 px-5 rounded-2xl grow min-h-20 transition-all cursor-pointer ${tipoSeleccionado === "moto"
+                                    ? "bg-black text-white hover:bg-neutral-900"
+                                    : "bg-white text-black hover:bg-neutral-100"
+                                    }`}
+                            >
+                                <img src="/images/moto.svg" alt="" className="max-w-12" />
+                                <span>Moto</span>
+                            </Button>
                         </div>
-                        <Button className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold sm:text-lg transition-all duration-200 hover:bg-yellow-500 active:scale-[0.99]">Quiero cotizar mi seguro gratis</Button>
-                        <p className="text-sm text-neutral-500 text-center">Sin costro sin compromiso. Te contactamos por WhatsApp</p>
+
+                        <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="hidden lg:block">
+                            <Button
+                                className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold sm:text-lg transition-all duration-200 hover:bg-yellow-500 active:scale-[0.99] cursor-pointer"
+                            > Quiero cotizar mi seguro gratis</Button>
+
+                        </Link>
+
+                        <p className="text-sm text-neutral-500 text-center">Sin costo sin compromiso. Te contactamos por WhatsApp</p>
                     </div>
                 </div>
                 <div className="space-y-4 lg:flex-1">
@@ -79,11 +108,39 @@ export default function HomeHeader() {
 
                     </div>
                     <div className="flex gap-0.5 lg:hidden">
-                        <Button className="py-2 px-5 rounded-2xl grow bg-black min-h-16"><img src="/images/carro.svg" alt="" className="max-w-12" /> <span>Carro</span></Button>
-                        <Button className="py-2 px-5 rounded-2xl grow bg-white text-black min-h-16"><img src="/images/moto.svg" alt="" className="max-w-12" /> <span>Moto</span></Button>
+                        <Button
+                            type="button"
+                            onClick={() => setTipoSeleccionado("carro")}
+                            className={`py-2 px-5 rounded-2xl grow min-h-16 transition-all cursor-pointer ${tipoSeleccionado === "carro"
+                                ? "bg-black text-white hover:bg-neutral-900"
+                                : "bg-white text-black hover:bg-neutral-100"
+                                }`}
+                        >
+                            <img src="/images/carro.svg" alt="" className="max-w-12" />
+                            <span>Carro</span>
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => setTipoSeleccionado("moto")}
+                            className={`py-2 px-5 rounded-2xl grow min-h-16 transition-all cursor-pointer ${tipoSeleccionado === "moto"
+                                ? "bg-black text-white hover:bg-neutral-900"
+                                : "bg-white text-black hover:bg-neutral-100"
+                                }`}
+                        >
+                            <img src="/images/moto.svg" alt="" className="max-w-12" />
+                            <span>Moto</span>
+                        </Button>
                     </div>
-                    <Button className="py-5 px-6 rounded-full text-black w-full min-h-14 lg:hidden">Quiero cotizar mi seguro gratis</Button>
-                    <p className="text-[12px] text-pretty text-neutral-500 text-center lg:hidden " >Sin costro sin compromiso. Te contactamos por WhatsApp</p>
+
+
+                    <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="lg:hidden">
+                        <Button
+                            className="py-5 px-6 rounded-full text-black w-full min-h-14 cursor-pointer"
+                        >Quiero cotizar mi seguro gratis</Button>
+                    </Link>
+
+
+                    <p className="text-[12px] text-pretty text-neutral-500 text-center lg:hidden mt-4" >Sin costo sin compromiso. Te contactamos por WhatsApp</p>
                     <div className="lg:hidden">
                         <div className="flex gap-4 justify-between items-center">
                             <span className="font-bold text-neutral-400 flex items-center gap-1">  <svg width="175" height="35" viewBox="0 0 175 35" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto max-w-24">

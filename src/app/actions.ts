@@ -260,19 +260,19 @@ export interface MunicipioDIVIPOLA {
 }
 
 export async function buscarCiudadesAction(query: string) {
-    if (!query || query.length < 3) return { success: true, ciudades: [] };
+    if (!query) return { success: true, ciudades: [] };
+
+    // Normalizar tildes y limpiar caracteres especiales o sufijos de país/departamento
+    const textoLimpio = query
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .split(/[,(]/)[0]
+        .trim();
+
+    if (textoLimpio.length < 3) return { success: true, ciudades: [] };
 
     try {
-
-        /*
-        const token = await obtenerTokenAgenteMotor();
-        const url = `https://apipro.agentemotor.com/seguros/geozone/co/?city_name_like=${encodeURIComponent(query)}`;
-
-        const res = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-*/
-        const url = `https://apipro.agentemotor.com/seguros/geozone/co/?city_name_like=${encodeURIComponent(query)}`;
+        const url = `https://apipro.agentemotor.com/seguros/geozone/co/?city_name_like=${encodeURIComponent(textoLimpio)}`;
 
         const res = await fetch(url);
 

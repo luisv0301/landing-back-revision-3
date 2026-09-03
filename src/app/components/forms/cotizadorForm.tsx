@@ -16,7 +16,13 @@ const PASOS = [
   { id: 5, title: "Elige tu póliza" },
 ];
 
-export default function CotizadorForm() {
+interface CotizadorFormProps {
+  initialTipo?: "carro" | "moto" | "pesado";
+}
+
+export default function CotizadorForm({
+  initialTipo = "carro",
+}: CotizadorFormProps) {
   const [step, setStep] = useState(1);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [datosCotizacion, setDatosCotizacion] = useState<{
@@ -267,7 +273,11 @@ export default function CotizadorForm() {
         <main className="w-full flex flex-col justify-center items-center pt-2 md:pt-6">
           <AnimatePresence mode="wait">
             {step === 1 && (
-              <Step1Cotiza key="step1" onSuccess={handleStep1Success} />
+              <Step1Cotiza
+                key="step1"
+                onSuccess={handleStep1Success}
+                initialTipo={initialTipo}
+              />
             )}
 
             {step === 2 && (
