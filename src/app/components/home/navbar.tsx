@@ -40,7 +40,7 @@ export default function Navbar() {
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 lg:max-w-280 lg:mx-auto">
 
                 {/* Brand / Logo */}
-                <a href="/" className="flex items-center" aria-label="Segurautos inicio">
+                <a href="/" className="flex items-center py-2 rounded-full bg-white px-3 lg:py-2 lg:px-5 lg:shadow-sm border border-neutral-200/70 lg:max-h-13.5" aria-label="Segurautos inicio">
                     <picture>
                         <img
                             src="/images/logo-transparent.png"
@@ -85,7 +85,7 @@ export default function Navbar() {
                     <a
                         href={PHONE_CONTACT.href}
                         aria-label={`Llamar a ${PHONE_CONTACT.number}`}
-                        className="flex h-11 w-16 items-center justify-center rounded-full bg-neutral-100/90 text-neutral-900 transition-all active:scale-[0.96] active:bg-neutral-200"
+                        className="flex min-h-13.5 w-16 items-center justify-center rounded-full bg-neutral-100/90 text-neutral-900 transition-all active:scale-[0.96] active:bg-neutral-200"
                     >
                         <PhoneIcon className="h-5 w-5 stroke-[2.2]" />
                     </a>

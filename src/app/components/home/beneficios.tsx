@@ -38,7 +38,7 @@ export default function Beneficios() {
                     transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
                     src="/images/respaldo.webp"
                     alt="Equipo Segurautos acompañándote"
-                    className="rounded-t-4xl lg:max-w-[50%] lg:rounded-4xl lg:object-cover w-full lg:w-auto"
+                    className="rounded-t-4xl lg:max-w-[50%] lg:rounded-4xl lg:object-cover w-full lg:w-auto lg:object-right"
                 />
                 <motion.ul
                     variants={containerVariants}

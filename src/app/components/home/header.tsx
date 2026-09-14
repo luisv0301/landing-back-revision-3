@@ -45,8 +45,8 @@ export default function HomeHeader() {
         <div className="relative w-full overflow-x-clip">
             <header className="px-6 pb-12 pt-9 lg:flex lg:max-w-280 lg:mx-auto lg:items-center lg:gap-8 lg:py-24 lg:px-0" ref={containerRef}>
                 <div className="text-center lg:text-start lg:flex-[0.7] lg:space-y-7">
-                    <h1 className="text-4xl text-pretty font-bold tracking-tight opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={titleRef}>Protege tu carro con el mejor todo riesgo del mercado</h1>
-                    <p className="mt-4 text-center lg:text-start mx-auto lg:mx-0 max-w-[44ch] opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={textRef}>Analizamos entre 13+ aseguradoras y te acompañamos hasta que tu carro quede protegido - <b>sin letra pequeña.</b> </p>
+                    <h1 className="text-4xl text-pretty font-bold tracking-tight opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={titleRef}>Protege tu carro con el mejor seguro todo riesgo del mercado</h1>
+                    <p className="mt-4 text-center lg:text-start mx-auto lg:mx-0 max-w-[44ch] opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={textRef}>Nuestro equipo analiza entre 13+ aseguradoras y construye una <b>solución</b> para garantizar <b>tu protección</b> y la de tu vehículo.</p>
                     <div className="hidden space-y-4 lg:block">
                         <div className="relative flex gap-2.5 p-1 bg-white rounded-3xl border border-neutral-200">
                             <button
@@ -88,11 +88,11 @@ export default function HomeHeader() {
                             <Button
                                 className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold sm:text-lg transition-all duration-200 hover:bg-yellow-500 active:scale-[0.98] cursor-pointer shadow-xs hover:shadow-md"
                             >
-                                Quiero cotizar mi seguro gratis
+                                Cotizar
                             </Button>
                         </Link>
 
-                        <p className="text-sm text-neutral-500 text-center">Sin costo sin compromiso. Te contactamos por WhatsApp</p>
+                        <p className="text-sm text-neutral-500 text-center">La mejor cobertura, por el mejor precio</p>
                     </div>
                 </div>
                 <div className="space-y-4 lg:flex-1">
@@ -156,11 +156,11 @@ export default function HomeHeader() {
                     <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="lg:hidden">
                         <Button
                             className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold transition-all duration-200 hover:bg-yellow-500 active:scale-[0.98] cursor-pointer shadow-xs"
-                        >Quiero cotizar mi seguro gratis</Button>
+                        >Cotizar</Button>
                     </Link>
 
 
-                    <p className="text-[12px] text-pretty text-neutral-500 text-center lg:hidden mt-4" >Sin costo sin compromiso. Te contactamos por WhatsApp</p>
+                    <p className="text-[12px] text-pretty text-neutral-500 text-center lg:hidden mt-4" >La mejor cobertura, por el mejor precio</p>
                     <div className="lg:hidden">
                         <div className="flex gap-4 justify-between items-center">
                             <span className="font-bold text-neutral-400 flex items-center gap-1">  <svg width="175" height="35" viewBox="0 0 175 35" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto max-w-24">
