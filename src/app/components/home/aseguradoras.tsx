@@ -16,7 +16,7 @@ export const INSURERS_DATA: readonly InsurerItem[] = [
     { id: "estado", name: "Seguros del Estado", logo: "/images/aseguradoras/seguros-de-estado.png" },
     { id: "colpatria", name: "AXA Colpatria", logo: "/images/aseguradoras/colpatria.png" },
     { id: "hdi", name: "HDI Seguros", logo: "/images/aseguradoras/hdi.png" },
-    { id: "chubb", name: "Chubb", logo: "/images/aseguradoras/chubb.png" },
+    { id: "zurich", name: "Zurich Seguros", logo: "/images/aseguradoras/zurich.png" },
     { id: "bolivar", name: "Seguros Bolívar", logo: "/images/aseguradoras/bolivar.png" },
     { id: "mapfre", name: "Mapfre Seguros", logo: "/images/aseguradoras/mapfre.png" },
     { id: "sbs", name: "SBS Seguros Colombia", logo: "/images/aseguradoras/sbs.png" },

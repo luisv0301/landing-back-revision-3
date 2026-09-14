@@ -15,9 +15,9 @@ export default function Marquee({
     return (
         <section
             aria-label="Aseguradoras aliadas"
-            className="relative w-full overflow-hidden bg-white border-y border-neutral-200/80"
+            className="relative w-full overflow-hidden border-y border-neutral-200/80"
         >
-            {/* Máscara de desvanecimiento en los extremos laterales */}
+
             <div className="relative w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
                 <motion.div
                     className={`flex w-max items-center ${pauseOnHover ? "hover:paused" : ""
@@ -29,10 +29,10 @@ export default function Marquee({
                         duration: speed,
                     }}
                 >
-                    {/* Track 1 */}
+
                     <LogoTrack items={INSURERS_DATA} />
 
-                    {/* Track 2 (Duplicado para loop continuo sin saltos) */}
+
                     <LogoTrack items={INSURERS_DATA} isDuplicate />
                 </motion.div>
             </div>
@@ -54,7 +54,7 @@ function LogoTrack({ items, isDuplicate = false }: LogoTrackProps) {
             {items.map((insurer) => (
                 <li
                     key={isDuplicate ? `dup-${insurer.id}` : insurer.id}
-                    className="flex h-20 w-44 shrink-0 items-center justify-center border-r border-neutral-200/90 px-6 sm:h-24 sm:w-52"
+                    className="flex h-20 w-44 shrink-0 items-center justify-center  px-6 sm:h-24 sm:w-52"
                 >
                     <img
                         src={insurer.logo}
