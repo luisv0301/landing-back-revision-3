@@ -11,9 +11,8 @@ export interface NavItem {
 
 export const NAV_LINKS: readonly NavItem[] = [
     { label: "Solicitar Asistencia", href: "/asistencia" },
-    { label: "Nuestros Clientes", href: "#testimonios" },
+    { label: "Nuestros Clientes", href: "/#testimonios" },
     { label: "Políticas", href: "/politicas" },
-    { label: "Contáctanos", href: "/contacto" },
 ] as const;
 
 export const PHONE_CONTACT = {
