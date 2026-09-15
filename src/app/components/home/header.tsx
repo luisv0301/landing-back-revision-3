@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -43,7 +44,7 @@ export default function HomeHeader() {
 
     return (
         <div className="relative w-full overflow-x-clip">
-            <header className="px-6 pb-12 pt-9 lg:flex lg:max-w-280 lg:mx-auto lg:items-center lg:gap-8 lg:py-24 lg:px-0" ref={containerRef}>
+            <header className="px-4 pb-12 pt-9 lg:flex lg:max-w-280 lg:mx-auto lg:items-center lg:gap-8 lg:py-24 lg:px-0" ref={containerRef}>
                 <div className="text-center lg:text-start lg:flex-[0.7] lg:space-y-7">
                     <h1 className="text-4xl text-pretty font-bold tracking-tight opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={titleRef}>Protege tu carro con el mejor seguro todo riesgo del mercado</h1>
                     <p className="mt-4 text-center lg:text-start mx-auto lg:mx-0 max-w-[44ch] opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={textRef}>Nuestro equipo analiza entre 13+ aseguradoras y construye una <b>solución</b> para garantizar <b>tu protección</b> y la de tu vehículo.</p>
@@ -96,13 +97,11 @@ export default function HomeHeader() {
                     </div>
                 </div>
                 <div className="space-y-4 lg:flex-1">
-                    <picture className="relative block h-full w-full">
-                        <source
-                            media="(min-width: 64rem)"
-                            srcSet="/images/header-img-desktop.webp"
-                        />
-                        <img src="/images/header-img.webp" alt="" className="mx-auto lg:mx-0 lg:scale-[1.2] lg:translate-y-[-2.5%] lg:translate-x-[25%]" />
-                    </picture>
+                    <div className="my-7 lg:my-0 relative block h-full w-full lg:scale-[1.1] lg:translate-y-[-2.5%] lg:translate-x-[17%]">
+                        <DotLottieReact src="/lotties/header.lottie" loop
+                            autoplay />
+                    </div>
+
                     <div className="hidden lg:grid lg:justify-center lg:space-y-2">
                         <svg width="175" height="35" viewBox="0 0 175 35" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto">
                             <path d="M8.49611 30.6251L10.8659 20.3803L2.91797 13.4896L13.418 12.5782L17.5013 2.91669L21.5847 12.5782L32.0847 13.4896L24.1368 20.3803L26.5066 30.6251L17.5013 25.1928L8.49611 30.6251Z" fill="black" />
