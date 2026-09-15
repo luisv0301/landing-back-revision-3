@@ -3,6 +3,8 @@
 import { useState, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { DotLottieReact, type DotLottie } from "@lottiefiles/dotlottie-react";
+
 // Types
 export type VehicleType = "carro" | "moto";
 
@@ -19,6 +21,7 @@ export interface CoverageInfo {
     totalLossTitle: string;
     totalLossPercentage: string;
     totalLossDescription: string;
+    lottie: string;
     image: {
         mobileSrc: string;
         desktopSrc: string;
@@ -36,9 +39,10 @@ const COVERAGE_DATA: Record<VehicleType, CoverageInfo> = {
         totalLossTitle: "Pérdida total",
         totalLossPercentage: "80-90%",
         totalLossDescription: "Indemnización sobre el valor comercial del vehículo.",
+        lottie: "/lotties/coberturas-auto-desk.lottie",
         image: {
-            mobileSrc: "/images/cobertura-carro.webp",
-            desktopSrc: "/images/cobertura-carro-xl.webp",
+            mobileSrc: "/images/cobertura-carro-test.webp",
+            desktopSrc: "/images/cobertura-carro-xl-test.webp",
             alt: "Pareja feliz en auto disfrutando un viaje",
         },
         benefits: [
@@ -72,9 +76,10 @@ const COVERAGE_DATA: Record<VehicleType, CoverageInfo> = {
         totalLossTitle: "Pérdida total",
         totalLossPercentage: "100%",
         totalLossDescription: "Indemnización completa sobre el valor comercial de la moto.",
+        lottie: "/lotties/coberturas-moto-desk.lottie",
         image: {
-            mobileSrc: "/images/cobertura-moto.webp",
-            desktopSrc: "/images/cobertura-moto-xl.webp",
+            mobileSrc: "/images/cobertura-moto-test.webp",
+            desktopSrc: "/images/cobertura-moto-xl-test.webp",
             alt: "Conductor en motocicleta equipado y seguro",
         },
         benefits: [
@@ -112,7 +117,7 @@ export default function Coberturas() {
         <section
             id="coberturas"
             aria-labelledby="coverage-heading"
-            className="w-full py-16 px-6 sm:px-6 lg:py-24 lg:max-w-280 lg:mx-auto"
+            className="w-full py-16 px-4 sm:px-6 lg:py-24 lg:max-w-280 lg:mx-auto"
         >
             <div className="mx-auto max-w-6xl">
 
@@ -199,9 +204,18 @@ export default function Coberturas() {
                             className="grid grid-cols-1 lg:grid-cols-2"
                         >
                             {/* Left Column: Visual Illustration & Banner */}
-                            <div className=" overflow-hidden ">
-                                <picture className="relative block h-full w-full">
 
+
+                            <div className="aspect-4/3 lg:aspect-none rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:max-w-full lg:w-auto overflow-hidden relative bg-[#FFF7CF]">
+                                <DotLottieReact
+                                    src={currentCoverage.lottie}
+                                    autoplay={true}
+                                    loop={true}
+                                    speed={currentCoverage.id === "moto" ? 0.7 : 0.35}
+                                    className={`h-full w-full absolute ${currentCoverage.id === "moto" ? " top-[-10%] scale-125" : "scale-140 top-[-15%]"} `}
+                                    renderConfig={{ autoResize: true }}
+                                />
+                                <picture>
                                     <source
                                         media="(min-width: 64rem)"
                                         srcSet={currentCoverage.image.desktopSrc}
@@ -211,9 +225,10 @@ export default function Coberturas() {
                                         alt={currentCoverage.image.alt}
                                         loading="lazy"
                                         decoding="async"
-                                        className="aspect-4/3 object-right lg:aspect-none object-cover rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:w-auto"
+                                        className="absolute top-0 left-0"
                                     />
                                 </picture>
+
                             </div>
 
 
