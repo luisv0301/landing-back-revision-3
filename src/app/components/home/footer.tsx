@@ -11,7 +11,7 @@ export interface SocialLink {
 
 export const FOOTER_NAV_LINKS: readonly FooterLink[] = [
     { label: "Solicitar Asistencia", href: "/asistencia" },
-    { label: "Nuestros Clientes", href: "#testimonios" },
+    { label: "Nuestros Clientes", href: "/#testimonios" },
     { label: "Políticas", href: "/politicas" },
     { label: "Contáctanos", href: "/contacto" },
 ] as const;
@@ -111,7 +111,7 @@ export default function Footer() {
 
                         {/* Main Yellow CTA */}
                         <a
-                            href="#cotizar"
+                            href="/formulario"
                             className="mt-1 flex items-center justify-center rounded-full bg-[#FFD000] px-6 py-4 text-center text-base sm:text-lg font-bold text-neutral-900 transition-all duration-200 hover:bg-yellow-500 active:scale-[0.99]"
                         >
                             Cotiza tu seguro
