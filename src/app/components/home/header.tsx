@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { LeadQuoteSheet } from "../leadsButton";
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -85,13 +86,18 @@ export default function HomeHeader() {
                             </button>
                         </div>
 
-                        <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="hidden lg:block">
+                        {/*Acceso a formulario mediante link, dejar hidden lg:block*/}
+                        <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="hidden">
                             <Button
                                 className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold sm:text-lg transition-all duration-200 hover:bg-yellow-500 active:scale-[0.98] cursor-pointer shadow-xs hover:shadow-md"
                             >
                                 Cotizar
                             </Button>
                         </Link>
+
+                        <div className="hidden lg:block">
+                            <LeadQuoteSheet />
+                        </div>
 
                         <p className="text-sm text-neutral-500 text-center">La mejor cobertura, por el mejor precio</p>
                     </div>
@@ -152,11 +158,19 @@ export default function HomeHeader() {
                         </button>
                     </div>
 
-                    <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="lg:hidden">
+
+                    {/*Acceso a formulario mediante link, quitar el hidden y agregar lg:hidden */}
+                    <Link href={`/formulario?tipo=${tipoSeleccionado}`} className="hidden">
                         <Button
                             className="py-5 px-6 rounded-full text-black w-full min-h-14 font-bold transition-all duration-200 hover:bg-yellow-500 active:scale-[0.98] cursor-pointer shadow-xs"
                         >Cotizar</Button>
                     </Link>
+
+
+                    <div className="lg:hidden">
+                        <LeadQuoteSheet />
+                    </div>
+
 
 
                     <p className="text-[12px] text-pretty text-neutral-500 text-center lg:hidden mt-4" >La mejor cobertura, por el mejor precio</p>
