@@ -222,7 +222,6 @@ export function QuoteForm({
                         autoComplete="name"
                         required
                         disabled={isPending}
-                        placeholder="Ej. Juan Carlos Pérez…"
                         className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus-visible:border-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900/10 disabled:opacity-50"
                     />
                     {state.errors?.nombre && (
@@ -246,7 +245,6 @@ export function QuoteForm({
                             inputMode="numeric"
                             required
                             disabled={isPending}
-                            placeholder="Ej. 1020304050…"
                             className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus-visible:border-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900/10 disabled:opacity-50"
                         />
                         {state.errors?.cedula && (
@@ -294,7 +292,6 @@ export function QuoteForm({
                             autoComplete="tel"
                             required
                             disabled={isPending}
-                            placeholder="Ej. 320 123 4567…"
                             className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus-visible:border-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900/10 disabled:opacity-50"
                         />
                         {state.errors?.telefono && (
@@ -318,7 +315,6 @@ export function QuoteForm({
                             spellCheck={false}
                             required
                             disabled={isPending}
-                            placeholder="ejemplo@correo.com…"
                             className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus-visible:border-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900/10 disabled:opacity-50"
                         />
                         {state.errors?.email && (
@@ -384,7 +380,6 @@ export function QuoteForm({
                         name="comentario"
                         rows={2}
                         disabled={isPending}
-                        placeholder="Ej. Deseo conocer coberturas de pérdida total o conductor elegido…"
                         className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus-visible:border-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900/10 disabled:opacity-50 resize-none"
                     />
                 </div>
