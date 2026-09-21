@@ -1,5 +1,13 @@
 "use client"
 import { motion, type Variants } from "framer-motion"
+import { GoogleReview } from "@/lib/google-reviews";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export interface TestimonialItem {
     id: string;
@@ -10,37 +18,9 @@ export interface TestimonialItem {
     content: string;
 }
 
-const TESTIMONIALS_DATA: readonly TestimonialItem[] = [
-    {
-        id: "t-1",
-        name: "María Salamanka",
-        location: "Bogotá",
-        avatar: "/images/profile-img.png",
-        rating: 5,
-        content:
-            "Excelente experiencia al contratar mi póliza todo riesgo. La atención y asesoramiento fueron fundamentales para encontrar la mejor opción para mis necesidades. Me explicaron claramente los términos y condiciones, y me ayudaron a entender todo el proceso. La amabilidad y profesionalismo me dieron confianza en la decisión que tomé. ¡Gracias por el excelente servicio!",
-    },
-    {
-        id: "t-2",
-        name: "María Salamanka",
-        location: "Bogotá",
-        avatar: "/images/profile-img.png",
-        rating: 5,
-        content:
-            "En el desarrollo de actualizar la vigencia de mi seguro de vehículo me atendio la Sra. Manuela Leyton y el apoyo durante todo el tramite fue muy cordial, clara y atenta. Muchas gracias.",
-    },
-    {
-        id: "t-3",
-        name: "María Salamanka",
-        location: "Bogotá",
-        avatar: "/images/profile-img.png",
-        rating: 5,
-        content:
-            "El proceso con ellos es muy ágil y rápido, facilitan mucho la comparación entre aseguradoras permitiendo escoger la que mejor se adapte a las necesidades del usuario, Karen Mendivelso me colaboró en todo el proceso, estuvo muy atenta todo el tiempo y resolvió todas mis dudas.",
-    },
-] as const;
 
-export default function TestimonialsSection() {
+
+export default function TestimonialsSection({ reviews, rating, userRatingTotal }: { reviews: GoogleReview[], rating: number, userRatingTotal: number }) {
     return (
         <section
             id="testimonios"
@@ -69,7 +49,7 @@ export default function TestimonialsSection() {
                         {/* 5 Big Stars with 4.9 split representation */}
                         <div
                             className="flex items-center gap-2"
-                            aria-label="Calificación promedio de 4.9 de 5 estrellas"
+                            aria-label={`Calificación promedio de ${rating} de 5 estrellas`}
                         >
                             {Array.from({ length: 4 }).map((_, i) => (
                                 <BigStar key={i} filled />
@@ -80,17 +60,17 @@ export default function TestimonialsSection() {
                         {/* Google Badge Scores */}
                         <div className="mt-4 flex items-center gap-6 sm:gap-8 text-white">
                             <span className="text-xl sm:text-2xl font-bold tracking-tight">
-                                4.9/5 en Google
+                                {rating}/5 en Google
                             </span>
                             <span className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-300">
-                                3.558 reviews
+                                {userRatingTotal} reviews
                             </span>
                         </div>
                     </div>
                 </header>
 
                 {/* Testimonials Stream */}
-                <TestimonialList testimonials={TESTIMONIALS_DATA} />
+                <TestimonialList testimonials={reviews} />
             </div>
         </section>
     );
@@ -133,7 +113,7 @@ function HalfBigStar() {
 }
 
 interface TestimonialListProps {
-    testimonials: readonly TestimonialItem[];
+    testimonials: readonly GoogleReview[];
 }
 
 const listVariants: Variants = {
@@ -157,52 +137,90 @@ const itemVariants: Variants = {
 
 export function TestimonialList({ testimonials }: TestimonialListProps) {
     return (
-        <motion.div
-            variants={listVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
-            className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:pb-0"
-        >
-            {testimonials.map((item) => (
-                <motion.div
-                    key={item.id}
-                    variants={itemVariants}
-                    className="w-[85%] shrink-0 snap-center sm:w-[360px] lg:w-auto first:ml-4 last:mr-4 lg:first:ml-0 lg:last:mr-0"
+        <>
+            {/* Mobile: Scroll horizontal nativo con touch swipe */}
+            <motion.div
+                variants={listVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-40px" }}
+                className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 pt-2 overscroll-x-contain scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden"
+            >
+                {testimonials?.map((item, id) => (
+                    <motion.div
+                        key={item.time ? `${item.author_name}-${item.time}` : id}
+                        variants={itemVariants}
+                        className="w-[85%] shrink-0 snap-center sm:w-[360px] first:ml-4 last:mr-4"
+                    >
+                        <TestimonialCard testimonial={item} />
+                    </motion.div>
+                ))}
+            </motion.div>
+
+            {/* Desktop: Carousel de shadcn con 3 cards y botones de navegación */}
+            <motion.div
+                variants={listVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-40px" }}
+                className="hidden lg:block w-full relative"
+            >
+                <Carousel
+                    opts={{
+                        align: "start",
+                        loop: false,
+                    }}
+                    className="w-full relative"
                 >
-                    <TestimonialCard testimonial={item} />
-                </motion.div>
-            ))}
-        </motion.div>
+                    <CarouselContent className="-ml-6">
+                        {testimonials?.map((item, id) => (
+                            <CarouselItem
+                                key={item.time ? `${item.author_name}-${item.time}` : id}
+                                className="pl-6 basis-1/3"
+                            >
+                                <motion.div variants={itemVariants} className="h-full">
+                                    <TestimonialCard testimonial={item} />
+                                </motion.div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="-left-4 xl:-left-12 size-10 rounded-full border-neutral-700 bg-neutral-800/90 text-white hover:bg-neutral-700 hover:text-white disabled:opacity-20 transition-colors shadow-lg" />
+                    <CarouselNext className="-right-4 xl:-right-12 size-10 rounded-full border-neutral-700 bg-neutral-800/90 text-white hover:bg-neutral-700 hover:text-white disabled:opacity-20 transition-colors shadow-lg" />
+                </Carousel>
+            </motion.div>
+        </>
     );
 }
 
 
 interface TestimonialCardProps {
-    testimonial: TestimonialItem;
+    testimonial: GoogleReview;
 }
 
 export function TestimonialCard({ testimonial }: TestimonialCardProps) {
     return (
-        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm ">
+        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm">
             <div>
                 {/* Author Header */}
                 <header className="flex items-center gap-3.5">
                     <picture className="h-13 w-13 shrink-0 overflow-hidden rounded-full bg-neutral-200">
                         <img
-                            src={testimonial.avatar}
-                            alt={`Fotografía de ${testimonial.name}`}
+                            src={testimonial.profile_photo_url}
+                            alt={`Fotografía de ${testimonial.author_name}`}
                             loading="lazy"
                             decoding="async"
+                            width={52}
+                            height={52}
+                            referrerPolicy="no-referrer"
                             className="h-full w-full object-cover"
                         />
                     </picture>
                     <div>
                         <h3 className="text-base font-bold text-neutral-900 leading-tight">
-                            {testimonial.name}
+                            {testimonial.author_name}
                         </h3>
                         <p className="text-sm font-medium text-neutral-400">
-                            {testimonial.location}
+                            {testimonial.relative_time_description}
                         </p>
                     </div>
                 </header>
@@ -224,8 +242,8 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
                 </div>
 
                 {/* Testimonial Body */}
-                <blockquote className="mt-4 text-sm leading-relaxed text-neutral-700">
-                    <p>{testimonial.content}</p>
+                <blockquote className="mt-4 text-sm leading-relaxed text-neutral-700 select-none">
+                    <p>{testimonial.text}</p>
                 </blockquote>
             </div>
         </article>
