@@ -2,57 +2,172 @@
 
 import { useState, useTransition } from 'react';
 import { useActionState } from 'react';
-import Image from 'next/image'
-import CarIcon from "./images/carro.svg"
-import BikeIcon from "./images/moto.svg"
-import { consultarVehiculoAction, obtenerMarcasAction, obtenerReferenciasAction, obtenerVersionesAction } from '@/app/actions';
+import Image from 'next/image';
+import { buscarCiudadesAction, consultarVehiculoAction, MunicipioDIVIPOLA } from '@/app/actions';
+import { iniciarCotizacion0KmAction } from '@/app/actions/cotizaciones';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Car, Bike, Truck, ChevronLeft } from 'lucide-react';
-import { div } from 'motion/react-client';
 import { USOS_VEHICULO_PESADO } from '@/lib/constantes';
+import { DocumentType } from '@/lib/types/sunrise';
+import {
+    DatosTomadorFields,
+    DatosAseguradoFields,
+    CiudadCirculacionInput,
+    CondicionesPolizaFields,
+} from './shared/formFields';
 
 interface Step1CotizaProps {
     onSuccess: (data: any) => void;
+    onSuccess0Km?: (data: any) => void;
     initialTipo?: 'carro' | 'moto' | 'pesado';
 }
 
-export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1CotizaProps) {
+export default function Step1Cotiza({
+    onSuccess,
+    onSuccess0Km,
+    initialTipo = 'carro',
+}: Step1CotizaProps) {
     const [esCeroKm, setEsCeroKm] = useState(false);
     const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>(initialTipo);
     const [usoPesado, setUsoPesado] = useState<string>('carga_transporte_mercancia_propia');
 
-    const [marcas, setMarcas] = useState<string[]>([]);
-    const [referencias, setReferencias] = useState<string[]>([]);
-    const [versiones, setVersiones] = useState<any[]>([]);
+    // Estados para flujo 0 km
+    const [nombreCompleto, setNombreCompleto] = useState('');
+    const [tipoDocumento, setTipoDocumento] = useState<DocumentType>('CC');
+    const [numeroDocumento, setNumeroDocumento] = useState('');
+    const [telefono, setTelefono] = useState('');
+    const [email, setEmail] = useState('');
+    const [genero, setGenero] = useState<'M' | 'F'>('M');
+    const [fechaNacimiento, setFechaNacimiento] = useState('');
+    const [esMismoAsegurado, setEsMismoAsegurado] = useState(true);
+    const [aseguradoNombre, setAseguradoNombre] = useState('');
+    const [aseguradoEmail, setAseguradoEmail] = useState('');
 
-    const [marcaSel, setMarcaSel] = useState('');
-    const [modeloSel, setModeloSel] = useState('2026');
-    const [refSel, setRefSel] = useState('');
-    const [versionSel, setVersionSel] = useState('');
-    const [precioFactura, setPrecioFactura] = useState('');
+    // Búsqueda de ciudad DIVIPOLA (para 0 km)
+    const [queryCiudad, setQueryCiudad] = useState('');
+    const [ciudadSeleccionada, setCiudadSeleccionada] = useState<MunicipioDIVIPOLA | null>(null);
+    const [listaCiudades, setListaCiudades] = useState<MunicipioDIVIPOLA[]>([]);
+    const [, startTransitionCiudad] = useTransition();
 
+    // Factura y validación (PDF, JPG, PNG, WEBP, máx 8 MB)
+    const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
+    const ALLOWED_MIME_TYPES = [
+        'application/pdf',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+    ];
+    const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'];
+    const [errorFactura, setErrorFactura] = useState<string | null>(null);
+
+    // Habeas Data
     const [aceptaHabeasData, setAceptaHabeasData] = useState(false);
     const [errorHabeasData, setErrorHabeasData] = useState(false);
-    const [noEncuentraVehiculo, setNoEncuentraVehiculo] = useState(false);
-    const [archivoFactura, setArchivoFactura] = useState<File | null>(null);
-    const [facturaEnviada, setFacturaEnviada] = useState(false);
 
-    const [isPendingCatalog, startTransition] = useTransition();
+    // useActionState para flujo con placa tradicional
+    const [statePlaca, formActionPlaca, isPendingPlaca] = useActionState(
+        async (prevState: any, formData: FormData) => {
+            const res = await consultarVehiculoAction(prevState, formData);
+            if (res.success && res.data) {
+                onSuccess(res.data);
+            }
+            return res;
+        },
+        null
+    );
 
+    // useActionState para flujo 0 km con factura
+    const [state0Km, formAction0Km, isPending0Km] = useActionState(
+        async (prevState: any, formData: FormData) => {
+            const res = await iniciarCotizacion0KmAction(prevState, formData);
+            if (res.success) {
+                if (onSuccess0Km) {
+                    onSuccess0Km({
+                        ticketId: res.ticketId,
+                        status: res.status,
+                        quoted: res.quoted,
+                        message: res.message,
+                        personales: res.personales,
+                        vehiculo: {
+                            tipoVehiculo,
+                            esCeroKm: true,
+                            brand: 'Vehículo 0 km',
+                            line: '',
+                            modelo: new Date().getFullYear(),
+                        },
+                    });
+                } else {
+                    onSuccess({
+                        ticketId: res.ticketId,
+                        status: res.status,
+                        quoted: res.quoted,
+                        personales: res.personales,
+                        vehiculo: {
+                            tipoVehiculo,
+                            esCeroKm: true,
+                        },
+                    });
+                }
+            }
+            return res;
+        },
+        null
+    );
 
-    const [state, formAction, isPending] = useActionState(async (prevState: any, formData: FormData) => {
-        const res = await consultarVehiculoAction(prevState, formData);
-        if (res.success) {
-            onSuccess(res.data);
+    const handleSearchCiudad = (text: string) => {
+        setQueryCiudad(text);
+        const cleanText = text
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .split(/[,(]/)[0]
+            .trim();
+
+        if (cleanText.length >= 2) {
+            startTransitionCiudad(async () => {
+                const res = await buscarCiudadesAction(cleanText);
+                if (res.success && res.ciudades) {
+                    setListaCiudades(res.ciudades);
+                }
+            });
+        } else {
+            setListaCiudades([]);
         }
-        return res;
-    }, null);
+    };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            setErrorFactura(null);
+            return;
+        }
+
+        const fileName = file.name || '';
+        const extension = '.' + fileName.split('.').pop()?.toLowerCase();
+        const mimeType = file.type?.toLowerCase();
+
+        const isMimeValid = mimeType ? ALLOWED_MIME_TYPES.includes(mimeType) : false;
+        const isExtValid = ALLOWED_EXTENSIONS.includes(extension);
+
+        if (!isMimeValid && !isExtValid) {
+            setErrorFactura('Formato no permitido. Solo se aceptan archivos PDF, JPG, PNG o WEBP.');
+            e.target.value = '';
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            setErrorFactura('El archivo supera el tamaño máximo permitido de 8 MB.');
+            e.target.value = '';
+            return;
+        }
+
+        setErrorFactura(null);
+    };
+
+    const handleFormSubmitCheck = (e: React.FormEvent<HTMLFormElement>) => {
         if (!aceptaHabeasData) {
             e.preventDefault();
             setErrorHabeasData(true);
@@ -60,99 +175,30 @@ export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1C
         }
         setErrorHabeasData(false);
 
-        if (esCeroKm) {
+        if (esCeroKm && errorFactura) {
             e.preventDefault();
-
-            if (noEncuentraVehiculo) {
-                if (!archivoFactura) {
-                    alert("Por favor selecciona una foto o PDF de la factura.");
-                    return;
-                }
-                setFacturaEnviada(true);
-                alert("Factura enviada con éxito. Un agente de Segurautos te contactará a la brevedad.");
-                return;
-            }
-
-            const versionObjeto = versiones.find((v) => v.code === versionSel);
-
-            const datosVehiculoCeroKm = {
-                placa: '',
-                tipoVehiculo,
-                esCeroKm: true,
-                fasecoldaCode: versionSel,
-                modelo: modeloSel,
-                brand: marcaSel,
-                line: versionObjeto?.lineaCompleta || refSel,
-                commercialPrice: Number(precioFactura) || 0,
-                referencePrice: versionObjeto?.precioReferencia || Number(precioFactura) || 0,
-            };
-
-
-            onSuccess(datosVehiculoCeroKm);
-        }
-
-    };
-
-    const handleTipoVehiculoChange = (tipo: 'carro' | 'moto' | 'pesado') => {
-        setTipoVehiculo(tipo);
-
-        if (esCeroKm) {
-            setMarcaSel('');
-            setRefSel('');
-            setVersionSel('');
+            return;
         }
     };
 
-
-    const handleToggleCeroKm = (checked: boolean) => {
-        setEsCeroKm(checked);
-        if (!checked) {
-            setNoEncuentraVehiculo(false);
-            setArchivoFactura(null);
-            setFacturaEnviada(false);
-        }
-
-        if (checked && marcas.length === 0) {
-            startTransition(async () => {
-                const res = await obtenerMarcasAction();
-                if (res.success && res.marcas) setMarcas(res.marcas);
-            });
-        }
-    };
-
-
-    const handleMarcaChange = (marca: string | null) => {
-        if (!marca) return;
-        setMarcaSel(marca);
-        setRefSel('');
-        setVersionSel('');
-        console.log("la marca", marca)
-        startTransition(async () => {
-            const res = await obtenerReferenciasAction(marca, parseInt(modeloSel));
-            if (res.success && res.referencias) setReferencias(res.referencias);
-        });
-    };
-
-
-    const handleRefChange = (ref: string | null) => {
-        if (!ref) return;
-        setRefSel(ref);
-        setVersionSel('');
-        startTransition(async () => {
-            const res = await obtenerVersionesAction(marcaSel, parseInt(modeloSel), ref);
-            if (res.success && res.versiones) setVersiones(res.versiones);
-        });
-    };
+    const isPending = esCeroKm ? isPending0Km : isPendingPlaca;
+    const currentError = esCeroKm ? state0Km?.error : statePlaca?.error;
 
     return (
         <div className='w-full max-w-137.5'>
-            <h1 className='text-3xl font-bold text-gray-900 text-center mb-2'>Cotiza tu seguro todo riego </h1>
-            <p className='text-center my-2'>¿Qué tipo de vehículo quieres asegurar?</p>
-            <form action={formAction} onSubmit={handleSubmit} className="w-full space-y-9 mt-9">
+            <h1 className='text-3xl font-bold text-gray-900 text-center mb-2'>Cotiza tu seguro todo riesgo</h1>
+            <p className='text-center my-2 text-gray-600'>¿Qué tipo de vehículo quieres asegurar?</p>
+
+            <form
+                action={esCeroKm ? formAction0Km : formActionPlaca}
+                onSubmit={handleFormSubmitCheck}
+                className="w-full space-y-8 mt-8"
+            >
                 <input type="hidden" name="tipoVehiculo" value={tipoVehiculo} />
                 <input type="hidden" name="esCeroKm" value={esCeroKm.toString()} />
+                <input type="hidden" name="useType" value={tipoVehiculo === 'pesado' ? usoPesado : 'particular'} />
 
-
+                {/* Selector de Tipo de Vehículo */}
                 <div className="grid grid-cols-3 gap-3">
                     <SelectorVehiculo
                         id="carro"
@@ -164,7 +210,7 @@ export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1C
                             height={60}
                         />}
                         isActive={tipoVehiculo === 'carro'}
-                        onClick={() => handleTipoVehiculoChange('carro')}
+                        onClick={() => setTipoVehiculo('carro')}
                     />
                     <SelectorVehiculo
                         id="moto"
@@ -176,14 +222,14 @@ export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1C
                             height={60}
                         />}
                         isActive={tipoVehiculo === 'moto'}
-                        onClick={() => handleTipoVehiculoChange('moto')}
+                        onClick={() => setTipoVehiculo('moto')}
                     />
                     <SelectorVehiculo
                         id="pesado"
                         label="Pesado"
                         icon={<Image
                             src="/images/carro.svg"
-                            alt="Icono de carro"
+                            alt="Icono de vehículo pesado"
                             width={60}
                             height={60}
                         />}
@@ -192,7 +238,7 @@ export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1C
                     />
                 </div>
 
-                {/* Selector CONDICIONAL de Uso de Vehículo (SOLO PARA PESADOS) */}
+                {/* Selector de Uso de Vehículo (SOLO PARA PESADOS) */}
                 {tipoVehiculo === 'pesado' && (
                     <div className="space-y-1.5 pt-1">
                         <Label className="text-sm font-medium text-gray-700">Tipo de Uso (Carga / Utilitario)</Label>
@@ -211,124 +257,123 @@ export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1C
                     </div>
                 )}
 
-                {/* Checkbox 0km */}
+                {/* Checkbox 0 km */}
                 <div className="flex items-center space-x-2">
-                    <Checkbox id="ceroKm" checked={esCeroKm} onCheckedChange={handleToggleCeroKm} className="rounded-full bg-white" />
-                    <Label htmlFor="ceroKm">Mi vehículo es 0 kilómetros.</Label>
+                    <Checkbox
+                        id="ceroKm"
+                        checked={esCeroKm}
+                        onCheckedChange={(checked) => setEsCeroKm(Boolean(checked))}
+                        className="rounded-full bg-white"
+                    />
+                    <Label htmlFor="ceroKm" className="cursor-pointer text-sm font-medium text-gray-700">
+                        Mi vehículo es 0 kilómetros.
+                    </Label>
                 </div>
 
                 {!esCeroKm ? (
-                    /* FLUTO TRADICIONAL POR PLACA */
+                    /* FLUJO TRADICIONAL POR PLACA */
                     <div className="space-y-2">
                         <Label htmlFor="placa">Placa</Label>
-                        <Input id="placa" name="placa" placeholder="ABC123" maxLength={6} required className="uppercase bg-white p-6 rounded-full" />
+                        <Input
+                            id="placa"
+                            name="placa"
+                            placeholder="ABC123"
+                            maxLength={6}
+                            required={!esCeroKm}
+                            autoComplete="off"
+                            className="uppercase bg-white p-6 rounded-full font-bold tracking-wider"
+                        />
                     </div>
                 ) : (
-                    /* FLUJO CASCADA PARA 0 KM */
-                    <div className="space-y-6">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setNoEncuentraVehiculo(!noEncuentraVehiculo);
-                                setFacturaEnviada(false);
-                            }}
-                            className="flex gap-1 items-center text-xs text-yellow-600 hover:text-yellow-700 underline font-medium cursor-pointer"
-                        >
-                            {noEncuentraVehiculo
-                                ? <><ChevronLeft /> Volver al buscador de vehículos</>
-                                : "¿No encuentras tu vehículo? Haz clic aquí para adjuntar tu factura"}
-                        </button>
+                    /* NUEVO FLUJO 0 KM: DATOS PERSONALES + CARGA DE FACTURA DIRECTA */
+                    <div className="space-y-6 pt-2">
+                        <div className="text-center pb-2">
+                            <h2 className="text-xl font-bold text-gray-900">
+                                Datos del Conductor y Factura
+                            </h2>
+                            <p className="text-xs text-gray-500">
+                                Radicaremos tu cotización 0 km directamente con un asesor de Segurautos.
+                            </p>
+                        </div>
 
-
-                        {noEncuentraVehiculo ? (
-                            <div className="space-y-4 p-4 bg-white rounded-2xl border border-gray-200">
-                                <Label htmlFor="facturaFile">
-                                    Adjunta la foto o PDF de la factura del vehículo *
-                                </Label>
-                                <Input
-                                    id="facturaFile"
-                                    type="file"
-                                    accept="image/*,application/pdf"
-                                    onChange={(e) => setArchivoFactura(e.target.files?.[0] || null)}
-                                    className="px-0 border-0 shadow-[0] file:mr-4 file:rounded-full file:border-0 file:bg-yellow-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-yellow-600 hover:file:bg-yellow-100"
-                                />
-                                <p className="text-xs text-gray-600 leading-relaxed">
-                                    Un agente de Segurautos revisará tu factura y te contactará manualmente para procesar tu cotización.
+                        {/* Adjunto de Factura */}
+                        <div className={`space-y-3 p-5 bg-white rounded-2xl border transition-colors ${errorFactura ? 'border-red-400 ring-1 ring-red-400' : 'border-gray-200'}`}>
+                            <Label htmlFor="invoice" className="font-semibold text-gray-900 text-sm">
+                                Adjunta la foto o PDF de la factura del vehículo *
+                            </Label>
+                            <Input
+                                id="invoice"
+                                name="invoice"
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                                onChange={handleInvoiceChange}
+                                required={esCeroKm}
+                                className="px-0 border-0 shadow-none file:mr-4 file:rounded-full file:border-0 file:bg-yellow-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-yellow-600 hover:file:bg-yellow-100 cursor-pointer"
+                            />
+                            <p className="text-xs text-gray-500">
+                                Formatos permitidos: PDF, JPG, PNG, WEBP (máx. 8 MB).
+                            </p>
+                            {errorFactura && (
+                                <p className="text-xs text-red-500 font-medium">
+                                    {errorFactura}
                                 </p>
-                                {facturaEnviada && (
-                                    <div className="p-3 bg-green-100 border border-green-300 text-green-800 text-xs rounded-xl font-medium text-center">
-                                        ✓ Factura enviada con éxito. Un agente de Segurautos te contactará a la brevedad.
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <>
-                                <input type="hidden" name="fasecoldaCode" value={versionSel} />
+                            )}
+                        </div>
 
-                                <div className="space-y-2">
-                                    <Label>Año Modelo</Label>
-                                    <Select value={modeloSel} onValueChange={(val) => setModeloSel(val ?? '')} name="modelo" >
-                                        <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Modelo" /></SelectTrigger>
-                                        <SelectContent alignItemWithTrigger={false}>
-                                            <SelectItem value="2026">2026</SelectItem>
-                                            <SelectItem value="2025">2025</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                        {/* Datos del Tomador */}
+                        <DatosTomadorFields
+                            nombreCompleto={nombreCompleto}
+                            onChangeNombre={setNombreCompleto}
+                            tipoDocumento={tipoDocumento}
+                            onChangeTipoDocumento={setTipoDocumento}
+                            numeroDocumento={numeroDocumento}
+                            onChangeNumeroDocumento={setNumeroDocumento}
+                            genero={genero}
+                            onChangeGenero={setGenero}
+                            telefono={telefono}
+                            onChangeTelefono={setTelefono}
+                            email={email}
+                            onChangeEmail={setEmail}
+                        />
 
-                                <div className='space-y-2'>
-                                    <Label>Marca</Label>
-                                    <Select value={marcaSel} onValueChange={handleMarcaChange} disabled={isPendingCatalog} >
-                                        <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Marca" /></SelectTrigger>
-                                        <SelectContent alignItemWithTrigger={false} >
-                                            {marcas.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                        {/* Datos del Asegurado */}
+                        <DatosAseguradoFields
+                            esMismoAsegurado={esMismoAsegurado}
+                            onChangeEsMismoAsegurado={setEsMismoAsegurado}
+                            aseguradoNombre={aseguradoNombre}
+                            onChangeAseguradoNombre={setAseguradoNombre}
+                            aseguradoEmail={aseguradoEmail}
+                            onChangeAseguradoEmail={setAseguradoEmail}
+                        />
 
-                                {marcaSel && (
-                                    <div className='space-y-2'>
-                                        <Label>Línea / Referencia</Label>
-                                        <Select value={refSel} onValueChange={handleRefChange} disabled={isPendingCatalog}>
-                                            <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Línea" /></SelectTrigger>
-                                            <SelectContent alignItemWithTrigger={false} >
-                                                {referencias.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
+                        {/* Ciudad de Circulación */}
+                        <CiudadCirculacionInput
+                            ciudadSeleccionada={ciudadSeleccionada}
+                            queryCiudad={queryCiudad}
+                            listaCiudades={listaCiudades}
+                            onSearchCiudad={handleSearchCiudad}
+                            onSelectCiudad={(c) => {
+                                setCiudadSeleccionada(c);
+                                setListaCiudades([]);
+                            }}
+                            onResetCiudad={() => setCiudadSeleccionada(null)}
+                        />
 
-                                {refSel && (
-                                    <div className='space-y-2'>
-                                        <Label>Versión Exacta</Label>
-                                        <Select value={versionSel} onValueChange={(val) => setVersionSel(val ?? '')} disabled={isPendingCatalog}>
-                                            <SelectTrigger className="bg-white p-6 rounded-full w-full"><SelectValue placeholder="Selecciona Versión" /></SelectTrigger>
-                                            <SelectContent alignItemWithTrigger={false} >
-                                                {versiones.map((v) => (
-                                                    <SelectItem key={v.code} value={v.code}>
-                                                        {v.lineaCompleta}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
+                        {/* Fecha de Nacimiento */}
+                        <div className="space-y-2">
+                            <Label htmlFor="fechaNacimiento0km">Fecha de Nacimiento *</Label>
+                            <Input
+                                id="fechaNacimiento0km"
+                                name="fechaNacimiento"
+                                type="date"
+                                value={fechaNacimiento}
+                                onChange={(e) => setFechaNacimiento(e.target.value)}
+                                required={esCeroKm}
+                                className="uppercase bg-white p-6 rounded-full"
+                            />
+                        </div>
 
-                                {versionSel && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="commercialPrice">Valor del vehículo en factura ($)</Label>
-                                        <Input id="commercialPrice"
-                                            name="commercialPrice"
-                                            type="number"
-                                            value={precioFactura}
-                                            onChange={(e) => setPrecioFactura(e.target.value)}
-                                            placeholder="Ej: 85000000"
-                                            required
-                                            className="uppercase bg-white p-6 rounded-full" />
-                                    </div>
-                                )}
-                            </>
-                        )}
+
                     </div>
                 )}
 
@@ -337,9 +382,10 @@ export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1C
                     <div className="flex items-start space-x-2">
                         <Checkbox
                             id="habeasData"
+                            name="consent"
                             checked={aceptaHabeasData}
                             onCheckedChange={(checked) => {
-                                setAceptaHabeasData(!!checked);
+                                setAceptaHabeasData(Boolean(checked));
                                 if (checked) setErrorHabeasData(false);
                             }}
                             className="mt-0.5 rounded-md bg-white border-gray-300"
@@ -355,14 +401,21 @@ export default function Step1Cotiza({ onSuccess, initialTipo = 'carro' }: Step1C
                     )}
                 </div>
 
-                {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
+                {currentError && (
+                    <p className="text-sm text-red-500 font-medium text-center">{currentError}</p>
+                )}
 
-                <Button type="submit" disabled={isPending} className="w-full  hover:bg-yellow-500 text-black rounded-full p-6">
-                    {isPending ? 'Procesando...' : (esCeroKm && noEncuentraVehiculo ? 'Enviar factura' : 'Ver ofertas disponibles')}
+                <Button
+                    type="submit"
+                    disabled={isPending}
+                    className="w-full hover:bg-yellow-500 text-black rounded-full p-6 cursor-pointer font-semibold text-base"
+                >
+                    {isPending
+                        ? (esCeroKm ? 'Radicando cotización con factura…' : 'Consultando vehículo…')
+                        : (esCeroKm ? 'Radicar cotización con factura' : 'Ver ofertas disponibles')}
                 </Button>
             </form>
         </div>
-
     );
 }
 

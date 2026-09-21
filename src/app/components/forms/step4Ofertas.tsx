@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { OfertaPoliza } from "@/lib/utils";
 import { useComparativoOfertas } from "@/app/hooks/useComparativoOfertas";
-
 import {
   Star,
   Loader2,
@@ -13,6 +12,7 @@ import {
   Check,
   FileDown,
   RefreshCw,
+  UserCheck,
 } from "lucide-react";
 import {
   Dialog,
@@ -23,9 +23,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-
 interface Step4Props {
   vehiculoData: any;
+  ticketId?: number | string;
   jsonComparativoUrl?: string;
   pdfUrl?: string;
   onSelectOferta: (oferta: OfertaPoliza) => void;
@@ -43,22 +43,26 @@ function formatCOP(valor: number): string {
   return CURRENCY_FORMATTER.format(valor);
 }
 
-
 export default function Step4Ofertas({
   vehiculoData,
+  ticketId,
   onSelectOferta,
   jsonComparativoUrl,
   pdfUrl,
 }: Step4Props) {
   const {
     ofertas,
+    status,
+    comparativePdfUrl,
     cargando,
     errorConsulta,
     segundosRestantes,
     reintentar,
-  } = useComparativoOfertas(jsonComparativoUrl);
+  } = useComparativoOfertas(ticketId, jsonComparativoUrl);
 
   const [filtroActivo, setFiltroActivo] = useState<TipoFiltro>("todas");
+
+  const pdfFinal = comparativePdfUrl || pdfUrl;
 
   const ofertasFiltradas = useMemo(() => {
     if (ofertas.length === 0) return [];
@@ -75,7 +79,8 @@ export default function Step4Ofertas({
       const amplias = ofertas.filter(
         (o) =>
           o.tipoCobertura.toLowerCase().includes("amplia") ||
-          o.tipoCobertura.toLowerCase().includes("premium"),
+          o.tipoCobertura.toLowerCase().includes("premium") ||
+          o.tipoCobertura.toLowerCase().includes("recomendada"),
       );
       return amplias.length > 0 ? amplias : ofertas;
     }
@@ -87,6 +92,8 @@ export default function Step4Ofertas({
     `${vehiculoData?.brand || ""} ${vehiculoData?.line || ""}`.trim() ||
     "tu vehículo";
 
+  const isAwaitingAdvisor = status === "awaiting_advisor" || status === "failed";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -96,19 +103,21 @@ export default function Step4Ofertas({
     >
       <div className="text-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          Tus Ofertas Personalizadas
+          {isAwaitingAdvisor ? "Solicitud Radicada" : "Tus Ofertas Personalizadas"}
         </h1>
         <p className="text-gray-600 text-sm">
           {cargando
             ? `Cotizando en simultáneo con las principales aseguradoras para tu ${nombreVehiculo}…`
-            : ofertas.length > 0
-              ? `Hemos encontrado ${ofertas.length} opciones disponibles para tu ${nombreVehiculo}`
-              : `Comparativo liquidado para tu ${nombreVehiculo}`}
+            : isAwaitingAdvisor
+              ? `Hemos recibido los datos de tu ${nombreVehiculo} con éxito.`
+              : ofertas.length > 0
+                ? `Hemos encontrado ${ofertas.length} opciones disponibles para tu ${nombreVehiculo}`
+                : `Comparativo liquidado para tu ${nombreVehiculo}`}
         </p>
       </div>
 
       {/* Filtros rápidos */}
-      {ofertas.length > 0 && (
+      {!isAwaitingAdvisor && ofertas.length > 0 && (
         <OfertasFiltros
           totalOfertas={ofertas.length}
           filtroActivo={filtroActivo}
@@ -122,42 +131,48 @@ export default function Step4Ofertas({
       )}
 
       {/* Manejo de error o reintento manual */}
-      {errorConsulta && !cargando && ofertas.length === 0 && (
+      {errorConsulta && !cargando && ofertas.length === 0 && !isAwaitingAdvisor && (
         <OfertasErrorBanner
           mensaje={errorConsulta}
           onReintentar={reintentar}
         />
       )}
 
-      {/* Listado de Tarjetas */}
-      <div className="w-full space-y-6">
-        <AnimatePresence mode="popLayout">
-          {ofertasFiltradas.map((item) => (
-            <OfertaCard
-              key={item.id}
-              item={item}
-              onSelectOferta={onSelectOferta}
-            />
-          ))}
-        </AnimatePresence>
+      {/* Caso: Asesor asignado (awaiting_advisor o failed) */}
+      {!cargando && isAwaitingAdvisor && (
+        <OfertaAwaitingAdvisorCard ticketId={ticketId} />
+      )}
 
-        {/* Skeleton de carga inicial */}
-        {cargando && ofertas.length === 0 && (
-          <div className="w-full bg-white rounded-3xl border border-gray-100 p-8 text-center space-y-3 animate-pulse">
-            <div className="h-6 bg-gray-200 rounded-full w-1/3 mx-auto" />
-            <div className="h-4 bg-gray-100 rounded-full w-1/2 mx-auto" />
-          </div>
-        )}
+      {/* Listado de Tarjetas de Oferta */}
+      {!isAwaitingAdvisor && (
+        <div className="w-full space-y-6">
+          <AnimatePresence mode="popLayout">
+            {ofertasFiltradas.map((item) => (
+              <OfertaCard
+                key={item.id}
+                item={item}
+                onSelectOferta={onSelectOferta}
+              />
+            ))}
+          </AnimatePresence>
 
-        {/* Fallback de PDF consolidado si no hay ofertas directas */}
-        {!cargando && ofertasFiltradas.length === 0 && pdfUrl && (
-          <OfertasFallbackPDF pdfUrl={pdfUrl} />
-        )}
-      </div>
+          {/* Skeleton de carga inicial */}
+          {cargando && ofertas.length === 0 && (
+            <div className="w-full bg-white rounded-3xl border border-gray-100 p-8 text-center space-y-3 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded-full w-1/3 mx-auto" />
+              <div className="h-4 bg-gray-100 rounded-full w-1/2 mx-auto" />
+            </div>
+          )}
+
+          {/* Fallback de PDF consolidado si no hay ofertas directas */}
+          {!cargando && ofertasFiltradas.length === 0 && pdfFinal && (
+            <OfertasFallbackPDF pdfUrl={pdfFinal} />
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }
-
 
 function OfertasFiltros({
   totalOfertas,
@@ -167,7 +182,7 @@ function OfertasFiltros({
   totalOfertas: number;
   filtroActivo: TipoFiltro;
   onSelectFiltro: (filtro: TipoFiltro) => void;
-}) {
+  }) {
   return (
     <div className="relative bg-white p-1.5 rounded-full border border-gray-200 shadow-xs flex items-center justify-between w-full max-w-md mb-8">
       <button
@@ -227,13 +242,12 @@ function OfertasFiltros({
           />
         )}
         <span className="text-xs">🛡️</span>
-        <span className="whitespace-nowrap text-[10px] lg:text-sm">Mejor Cobertura</span>
+        <span className="whitespace-nowrap text-[10px] lg:text-sm">Recomendadas</span>
       </button>
     </div>
   );
 }
 
-// Subcomponente: Banner de carga / temporizador
 function OfertasLoadingState({ segundosRestantes }: { segundosRestantes: number }) {
   return (
     <div className="w-full bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-6 flex items-center justify-between">
@@ -241,7 +255,7 @@ function OfertasLoadingState({ segundosRestantes }: { segundosRestantes: number 
         <Loader2 className="animate-spin text-black" size={20} />
         <p className="text-xs md:text-sm font-medium text-gray-800">
           {segundosRestantes > 0
-            ? `Tarifando con aseguradoras (tiempo estimado: ${segundosRestantes}s)…`
+            ? `Consultando con aseguradoras (tiempo estimado: ${segundosRestantes}s)…`
             : "Consolidando las mejores opciones…"}
         </p>
       </div>
@@ -249,7 +263,6 @@ function OfertasLoadingState({ segundosRestantes }: { segundosRestantes: number 
   );
 }
 
-// Subcomponente: Banner de error y reintento
 function OfertasErrorBanner({
   mensaje,
   onReintentar,
@@ -267,7 +280,7 @@ function OfertasErrorBanner({
         variant="outline"
         size="sm"
         onClick={onReintentar}
-        className="border-amber-300 hover:bg-amber-100 text-amber-900"
+        className="border-amber-300 hover:bg-amber-100 text-amber-900 cursor-pointer"
       >
         <RefreshCw size={14} className="mr-1.5" /> Reintentar
       </Button>
@@ -275,7 +288,34 @@ function OfertasErrorBanner({
   );
 }
 
-// Subcomponente: Tarjeta individual de oferta con su modal
+function OfertaAwaitingAdvisorCard({ ticketId }: { ticketId?: number | string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full bg-white rounded-3xl border border-gray-200 p-8 text-center space-y-6 shadow-xs"
+    >
+      <div className="mx-auto bg-yellow-100 w-16 h-16 flex items-center justify-center rounded-full">
+        <UserCheck size={32} className="text-yellow-700" />
+      </div>
+
+      <div className="space-y-2 max-w-md mx-auto">
+        <h3 className="text-xl font-bold text-gray-900">
+          Un asesor te contactará a la brevedad
+        </h3>
+        <p className="text-gray-600 text-sm">
+          Hemos recibido tu solicitud y un especialista de Segurautos revisará las opciones y te contactará con la mejor tarifa disponible.
+        </p>
+        {ticketId && (
+          <div className="inline-block mt-3 px-4 py-1.5 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
+            Radicado de Solicitud: #{ticketId}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 function OfertaCard({
   item,
   onSelectOferta,
@@ -320,7 +360,7 @@ function OfertaCard({
           <span className="text-xs text-gray-500 font-medium block">
             Prima Anual
           </span>
-          <div className="text-2xl md:text-3xl font-bold text-gray-900">
+          <div className="text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">
             {formatCOP(item.precioAnual)}
           </div>
           <span className="inline-block bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
@@ -380,7 +420,6 @@ function OfertaCard({
   );
 }
 
-// Subcomponente: Fallback de PDF consolidado
 function OfertasFallbackPDF({ pdfUrl }: { pdfUrl: string }) {
   return (
     <motion.div

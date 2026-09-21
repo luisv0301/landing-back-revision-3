@@ -1,67 +1,129 @@
-import { useState, useEffect, useCallback } from "react";
-import { consultarOfertasRespaldoAction } from "@/app/actions/cotizaciones";
+import { useState, useCallback, useRef } from "react";
+import { useEffect } from "react";
+import {
+  consultarEstadoCotizacionAction,
+} from "@/app/actions/cotizaciones";
 import { formatearPolizas, OfertaPoliza } from "@/lib/utils";
+import { QuoteStatus } from "@/lib/types/sunrise";
 
-export function useComparativoOfertas(jsonComparativoUrl?: string) {
-    const [ofertas, setOfertas] = useState<OfertaPoliza[]>([]);
-    const [cargando, setCargando] = useState(true);
-    const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
-    const [segundosRestantes, setSegundosRestantes] = useState(25);
+function useMountEffect(effect: () => void | (() => void)) {
+  /* eslint-disable react-hooks/exhaustive-deps, no-restricted-syntax */
+  useEffect(effect, []);
+}
 
-    const consultarComparativo = useCallback(async () => {
-        if (!jsonComparativoUrl) {
-            setErrorConsulta("No se proporcionó la URL del comparativo.");
+export function useComparativoOfertas(
+  ticketId?: number | string,
+  jsonComparativoUrl?: string,
+) {
+  const [ofertas, setOfertas] = useState<OfertaPoliza[]>([]);
+  const [status, setStatus] = useState<QuoteStatus | null>(null);
+  const [ticketState, setTicketState] = useState<string | null>(null);
+  const [comparativePdfUrl, setComparativePdfUrl] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
+  const [segundosRestantes, setSegundosRestantes] = useState(30);
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingRef = useRef<boolean>(false);
+
+  const stopPolling = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    isPollingRef.current = false;
+  }, []);
+
+  const realizarConsulta = useCallback(async () => {
+    if (!ticketId && !jsonComparativoUrl) {
+      setErrorConsulta("No se proporcionó el número de radicado o ticket.");
+      setCargando(false);
+      stopPolling();
+      return;
+    }
+
+    try {
+      if (ticketId) {
+        const res = await consultarEstadoCotizacionAction(ticketId);
+
+        if (res.success) {
+          setStatus(res.status as QuoteStatus);
+          setTicketState(res.ticketState || null);
+          if (res.comparativePdfUrl) {
+            setComparativePdfUrl(res.comparativePdfUrl);
+          }
+
+          if (res.status === "ready" || (res.quotes && res.quotes.length > 0)) {
+            const formateadas = formatearPolizas(res.quotes);
+            setOfertas(formateadas);
             setCargando(false);
+            stopPolling();
             return;
-        }
+          }
 
-        setCargando(true);
-        setErrorConsulta(null);
-
-        try {
-            const res = await consultarOfertasRespaldoAction(jsonComparativoUrl);
-
-            if (res.success && Array.isArray(res.ofertas) && res.ofertas.length > 0) {
-                const formateadas = formatearPolizas(res.ofertas);
-                setOfertas(formateadas);
-            } else {
-                setErrorConsulta(
-                    "Las aseguradoras no arrojaron opciones disponibles o se presentó una demora en la liquidación.",
-                );
-            }
-        } catch (err: any) {
-            setErrorConsulta(err.message || "Error al recuperar las ofertas.");
-        } finally {
+          if (res.status === "awaiting_advisor" || res.status === "failed") {
             setCargando(false);
+            stopPolling();
+            return;
+          }
+        } else {
+          setErrorConsulta(res.error || "Demora al recuperar cotizaciones.");
         }
-    }, [jsonComparativoUrl]);
+      }
+    } catch (err: any) {
+      console.error("[useComparativoOfertas] Error en sondeo:", err);
+      setErrorConsulta(err.message || "Error al recuperar las ofertas.");
+    }
+  }, [ticketId, jsonComparativoUrl, stopPolling]);
 
-    useEffect(() => {
-        setSegundosRestantes(25);
-        const timer = setInterval(() => {
-            setSegundosRestantes((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+  const iniciarPolling = useCallback(() => {
+    stopPolling();
+    setCargando(true);
+    setErrorConsulta(null);
+    setSegundosRestantes(30);
+    isPollingRef.current = true;
 
-        return () => clearInterval(timer);
-    }, [jsonComparativoUrl]);
+    // Ejecutar primera consulta inmediata
+    void realizarConsulta();
 
-    useEffect(() => {
-        if (segundosRestantes === 0) {
-            consultarComparativo();
+    // Contador regresivo visual
+    timerRef.current = setInterval(() => {
+      setSegundosRestantes((prev) => {
+        if (prev <= 1) {
+          return 0;
         }
-    }, [segundosRestantes, consultarComparativo]);
+        return prev - 1;
+      });
+    }, 1000);
 
-    return {
-        ofertas,
-        cargando,
-        errorConsulta,
-        segundosRestantes,
-        reintentar: consultarComparativo,
+    // Polling cada 5 segundos
+    pollIntervalRef.current = setInterval(() => {
+      if (isPollingRef.current) {
+        void realizarConsulta();
+      }
+    }, 5000);
+  }, [realizarConsulta, stopPolling]);
+
+  useMountEffect(() => {
+    iniciarPolling();
+    return () => {
+      stopPolling();
     };
+  });
+
+  return {
+    ofertas,
+    status,
+    ticketState,
+    comparativePdfUrl,
+    cargando,
+    errorConsulta,
+    segundosRestantes,
+    reintentar: iniciarPolling,
+  };
 }

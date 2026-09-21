@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
-
 interface VehiculoData {
     brand?: string;
     line?: string;
@@ -19,11 +18,9 @@ interface Step2Props {
 }
 
 export default function Step2Verifica({ vehiculo, onNext }: Step2Props) {
-
     const rawPrecio = vehiculo.esCeroKm
         ? vehiculo.commercialPrice || vehiculo.referencePrice
         : vehiculo.referencePrice || vehiculo.commercialPrice;
-
 
     const precioFormateado = new Intl.NumberFormat('es-CO', {
         style: 'currency',
@@ -47,9 +44,8 @@ export default function Step2Verifica({ vehiculo, onNext }: Step2Props) {
             }}
             className="w-full mx-auto flex flex-col items-center max-w-137.5"
         >
-
             <div className="text-center mb-8">
-                <h1 className='text-2xl md:text-3xl font-bold text-gray-900 text-center mb-2'> ¡Lo encontramos!</h1>
+                <h1 className='text-2xl md:text-3xl font-bold text-gray-900 text-center mb-2'>¡Lo encontramos!</h1>
                 <p className="text-gray-600 font-medium text-base text-center">
                     Vamos a cotizar tu:{' '}
                     <span className="font-bold text-black">
@@ -57,7 +53,6 @@ export default function Step2Verifica({ vehiculo, onNext }: Step2Props) {
                     </span>
                 </p>
             </div>
-
 
             <div className="w-full bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
                 <div className="grid grid-cols-3 gap-2 text-center divide-x divide-gray-100">
@@ -84,23 +79,20 @@ export default function Step2Verifica({ vehiculo, onNext }: Step2Props) {
                 </div>
             </div>
 
-
             <div className="flex items-center justify-center space-x-3 mb-8">
                 <span className="text-gray-600 text-md font-medium">Valor Comercial:</span>
-                <span className="text-md font-bold text-gray-900">
+                <span className="text-md font-bold text-gray-900 tabular-nums">
                     {precioFormateado}
                 </span>
             </div>
 
-
             <Button
+                type="button"
                 onClick={onNext}
-                className="w-full  hover:bg-yellow-500 text-black rounded-full p-6"
+                className="w-full hover:bg-yellow-500 text-black rounded-full p-6 font-semibold cursor-pointer"
             >
                 Avanza
             </Button>
-
-
         </motion.div>
     );
 }

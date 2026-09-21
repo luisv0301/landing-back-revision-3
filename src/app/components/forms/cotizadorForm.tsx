@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, ChevronDown, Lock, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, Lock, Star, Check, PhoneCall } from "lucide-react";
 import Step1Cotiza from "./step1Cotiza";
 import Step2Verifica from "./step2Verifica";
 import Step3DatosPersonales from "./step3DatosPersonales";
 import Step4Ofertas from "./step4Ofertas";
+import { seleccionarPolizaAction } from "@/app/actions/cotizaciones";
+import { registrarLeadAction } from "@/app/actions/leads";
+import { Button } from "@/components/ui/button";
 
 const PASOS = [
   { id: 1, title: "Cotiza" },
   { id: 2, title: "Verifica" },
   { id: 3, title: "Completa datos" },
   { id: 4, title: "Ofertas" },
-  { id: 5, title: "Elige tu póliza" },
+  { id: 5, title: "Confirmación" },
 ];
 
 interface CotizadorFormProps {
@@ -28,17 +31,23 @@ export default function CotizadorForm({
   const [datosCotizacion, setDatosCotizacion] = useState<{
     vehiculo?: any;
     personales?: any;
+    ticketId?: number | string;
+    status?: string;
     jsonComparativoUrl?: string;
     pdfUrl?: string;
     ofertaSeleccionada?: any;
-    session?: { channelName: string; token: string | undefined };
-    oppId?: string;
+    message?: string;
   }>({});
 
+  const [, startTransition] = useTransition();
 
   const handleBack = () => {
     if (step > 1) {
-      setStep((prev) => prev - 1);
+      if (datosCotizacion.vehiculo?.esCeroKm && step === 4) {
+        setStep(1);
+      } else {
+        setStep((prev) => prev - 1);
+      }
       setIsMenuOpen(false);
     }
   };
@@ -46,18 +55,63 @@ export default function CotizadorForm({
   const handleStep1Success = (dataVehiculo: any) => {
     setDatosCotizacion((prev) => ({ ...prev, vehiculo: dataVehiculo }));
     setStep(2);
+
+    startTransition(async () => {
+      await registrarLeadAction({
+        vehicle_type: dataVehiculo.tipoVehiculo || initialTipo,
+        funnel_stage: dataVehiculo.requiresInvoice ? "vehicle_not_found" : "vehicle_found",
+        plate: dataVehiculo.placa || undefined,
+      });
+    });
+  };
+
+  const handleStep1Success0Km = (datos: any) => {
+    setDatosCotizacion((prev) => ({
+      ...prev,
+      vehiculo: datos.vehiculo,
+      personales: datos.personales,
+      ticketId: datos.ticketId,
+      status: datos.status,
+      message: datos.message,
+    }));
+    // Salta directamente al paso de ofertas / radicación
+    setStep(4);
+
+    startTransition(async () => {
+      await registrarLeadAction({
+        vehicle_type: datos.vehiculo?.tipoVehiculo || initialTipo,
+        funnel_stage: "invoice_pending",
+        name: datos.personales?.nombreCompleto,
+        phone: datos.personales?.telefono,
+        email: datos.personales?.email,
+        document_id: datos.personales?.numeroDocumento,
+        city: datos.personales?.cityName,
+      });
+    });
   };
 
   const handleStep3Success = (datos: any) => {
     setDatosCotizacion((prev) => ({
       ...prev,
       personales: datos.personales,
-      session: datos.session,
-      oppId: datos.oppId,
-      jsonComparativoUrl: datos.jsonComparativoUrl,
-      pdfUrl: datos.pdfUrl,
+      ticketId: datos.ticketId,
+      status: datos.status,
+      message: datos.message,
     }));
     setStep(4);
+
+    startTransition(async () => {
+      await registrarLeadAction({
+        vehicle_type: datosCotizacion.vehiculo?.tipoVehiculo || initialTipo,
+        funnel_stage: "quoted",
+        name: datos.personales?.nombreCompleto || `${datos.personales?.firstname || ""} ${datos.personales?.lastname || ""}`.trim(),
+        phone: datos.personales?.telefono,
+        email: datos.personales?.email,
+        document_id: datos.personales?.numeroDocumento,
+        plate: datosCotizacion.vehiculo?.placa,
+        city: datos.personales?.cityName,
+      });
+    });
   };
 
   const handleSelectOferta = (ofertaElegida: any) => {
@@ -66,18 +120,43 @@ export default function CotizadorForm({
       ofertaSeleccionada: ofertaElegida,
     }));
     setStep(5);
+
+    startTransition(async () => {
+      if (datosCotizacion.ticketId) {
+        await seleccionarPolizaAction(datosCotizacion.ticketId, {
+          insurer: ofertaElegida.aseguradora,
+          plan_name: ofertaElegida.planNombre,
+          premium: ofertaElegida.precioAnual,
+          quote_id: Number(ofertaElegida.id) || undefined,
+        });
+
+        await registrarLeadAction({
+          vehicle_type: datosCotizacion.vehiculo?.tipoVehiculo || initialTipo,
+          funnel_stage: "selected",
+          name: datosCotizacion.personales?.nombreCompleto,
+          phone: datosCotizacion.personales?.telefono,
+          email: datosCotizacion.personales?.email,
+          plate: datosCotizacion.vehiculo?.placa,
+        });
+      }
+    });
   };
 
   const isStepAccessible = (targetStep: number) => {
     if (targetStep === 1) return true;
-    if (targetStep === 2) return !!datosCotizacion.vehiculo;
-    if (targetStep === 3) return !!datosCotizacion.vehiculo;
+    if (datosCotizacion.vehiculo?.esCeroKm) {
+      if (targetStep === 4) return Boolean(datosCotizacion.ticketId);
+      if (targetStep === 5) return Boolean(datosCotizacion.ofertaSeleccionada);
+      return false;
+    }
+    if (targetStep === 2) return Boolean(datosCotizacion.vehiculo);
+    if (targetStep === 3) return Boolean(datosCotizacion.vehiculo);
     if (targetStep === 4)
-      return !!(
+      return Boolean(
         datosCotizacion.vehiculo &&
-        (datosCotizacion.personales || datosCotizacion.session)
+        (datosCotizacion.personales || datosCotizacion.ticketId)
       );
-    if (targetStep === 5) return !!datosCotizacion.ofertaSeleccionada;
+    if (targetStep === 5) return Boolean(datosCotizacion.ofertaSeleccionada);
     return false;
   };
 
@@ -91,9 +170,7 @@ export default function CotizadorForm({
   return (
     <div className="min-h-screen flex flex-col justify-between p-4 md:p-8 font-sans">
       <div className="max-w-6xl w-full mx-auto grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 items-start">
-        {/* ========================================================= */}
-        {/* NAVEGACIÓN DESKTOP (Barra Lateral)                       */}
-        {/* ========================================================= */}
+        {/* NAVEGACIÓN DESKTOP (Barra Lateral) */}
         <aside className="hidden md:flex flex-col space-y-6 pt-4">
           <button
             onClick={handleBack}
@@ -151,9 +228,7 @@ export default function CotizadorForm({
           </nav>
         </aside>
 
-        {/* ========================================================= */}
-        {/* NAVEGACIÓN MOBILE (Barra Superior y Menú Desplegable)     */}
-        {/* ========================================================= */}
+        {/* NAVEGACIÓN MOBILE */}
         <header className="md:hidden w-full space-y-4 relative">
           <div className="flex items-center justify-between">
             <button
@@ -166,7 +241,6 @@ export default function CotizadorForm({
             >
               <ArrowLeft size={20} />
             </button>
-            {/* Botón selector con ChevronDown */}
             <button
               type="button"
               onClick={() => setIsMenuOpen((prev) => !prev)}
@@ -181,14 +255,13 @@ export default function CotizadorForm({
                 <ChevronDown size={18} className="text-gray-500" />
               </motion.div>
             </button>
-            <div className="w-6" /> {/* Spacer de balance flex */}
+            <div className="w-6" />
           </div>
 
           {/* Menú Desplegable Móvil */}
           <AnimatePresence>
             {isMenuOpen && (
               <>
-                {/* Backdrop invisible para cerrar al tocar afuera */}
                 <div
                   className="fixed inset-0 z-20 bg-black/10"
                   onClick={() => setIsMenuOpen(false)}
@@ -267,15 +340,14 @@ export default function CotizadorForm({
           </div>
         </header>
 
-        {/* ========================================================= */}
-        {/* CONTENEDOR PRINCIPAL DEL FORMULARIO                       */}
-        {/* ========================================================= */}
+        {/* CONTENEDOR PRINCIPAL */}
         <main className="w-full flex flex-col justify-center items-center pt-2 md:pt-6">
           <AnimatePresence mode="wait">
             {step === 1 && (
               <Step1Cotiza
                 key="step1"
                 onSuccess={handleStep1Success}
+                onSuccess0Km={handleStep1Success0Km}
                 initialTipo={initialTipo}
               />
             )}
@@ -301,9 +373,21 @@ export default function CotizadorForm({
               <Step4Ofertas
                 key="step4"
                 vehiculoData={datosCotizacion.vehiculo}
+                ticketId={datosCotizacion.ticketId}
                 jsonComparativoUrl={datosCotizacion.jsonComparativoUrl}
                 onSelectOferta={handleSelectOferta}
                 pdfUrl={datosCotizacion.pdfUrl}
+              />
+            )}
+
+            {step === 5 && (
+              <Step5Confirmacion
+                key="step5"
+                datosCotizacion={datosCotizacion}
+                onReset={() => {
+                  setDatosCotizacion({});
+                  setStep(1);
+                }}
               />
             )}
           </AnimatePresence>
@@ -322,5 +406,80 @@ export default function CotizadorForm({
         </main>
       </div>
     </div>
+  );
+}
+
+function Step5Confirmacion({
+  datosCotizacion,
+  onReset,
+}: {
+  datosCotizacion: any;
+  onReset: () => void;
+}) {
+  const oferta = datosCotizacion.ofertaSeleccionada;
+  const precioFormateado = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(Number(oferta?.precioAnual || 0));
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-6 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm"
+    >
+      <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-600">
+        <Check size={32} strokeWidth={3} />
+      </div>
+
+      <div className="space-y-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          ¡Excelente elección!
+        </h1>
+        <p className="text-gray-600 text-sm">
+          Has seleccionado la póliza de{" "}
+          <strong className="text-black">{oferta?.aseguradora || "tu aseguradora preferida"}</strong>{" "}
+          ({oferta?.planNombre || "Todo Riesgo"}).
+        </p>
+      </div>
+
+      {datosCotizacion.ticketId && (
+        <div className="px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-full text-xs font-semibold text-yellow-900">
+          Radicado Sunrise CRM: #{datosCotizacion.ticketId}
+        </div>
+      )}
+
+      <div className="w-full bg-gray-50 rounded-2xl p-6 border border-gray-200 text-left space-y-3">
+        <div className="flex justify-between items-center border-b border-gray-200 pb-3">
+          <span className="text-sm text-gray-600">Aseguradora</span>
+          <span className="text-sm font-bold text-gray-900">{oferta?.aseguradora}</span>
+        </div>
+        <div className="flex justify-between items-center border-b border-gray-200 pb-3">
+          <span className="text-sm text-gray-600">Plan</span>
+          <span className="text-sm font-bold text-gray-900">{oferta?.planNombre}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600">Prima Anual</span>
+          <span className="text-lg font-bold text-gray-900 tabular-nums">{precioFormateado}</span>
+        </div>
+      </div>
+
+      <div className="space-y-3 w-full pt-2">
+        <div className="flex items-center justify-center space-x-2 text-xs text-gray-600">
+          <PhoneCall size={14} className="text-green-600" />
+          <span>Un asesor especializado se comunicará contigo para finalizar la emisión.</span>
+        </div>
+
+        <Button
+          type="button"
+          onClick={onReset}
+          variant="outline"
+          className="w-full rounded-full p-6 text-sm font-semibold border-gray-300 hover:bg-gray-100 cursor-pointer"
+        >
+          Realizar otra cotización
+        </Button>
+      </div>
+    </motion.div>
   );
 }

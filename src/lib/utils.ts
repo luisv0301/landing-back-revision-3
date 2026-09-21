@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export interface CoberturaDetalle {
@@ -10,6 +10,7 @@ export interface CoberturaDetalle {
   descripcion: string;
   grupo?: string;
 }
+
 export interface OfertaPoliza {
   id: string;
   aseguradora: string;
@@ -20,14 +21,70 @@ export interface OfertaPoliza {
   deducible: string;
   coberturaRC: string;
   coberturas: CoberturaDetalle[];
-  rawOfferData: any;
+  status?: string;
+  detailUrl?: string;
+  rawOfferData?: any;
 }
 
-
+/**
+ * Normaliza las ofertas recibidas desde Sunrise CRM o comparativos de pólizas.
+ */
 export const formatearPolizas = (listaRaw: any[]): OfertaPoliza[] => {
   const nuevasOfertas: OfertaPoliza[] = [];
 
   listaRaw.forEach((poliza: any, idx: number) => {
+    // Si ya viene formateado desde Sunrise API (quotes: [{ id, insurer, plan_name, premium, status, logo_url, detail_url }])
+    if (poliza.insurer || poliza.plan_name || poliza.premium) {
+      const precio = Number(poliza.premium || poliza.total_price || 0);
+      if (precio > 0) {
+        const coberturas: CoberturaDetalle[] = Array.isArray(poliza.coverages)
+          ? poliza.coverages.map((c: any) => ({
+              titulo: c.title || c.description_tag || "Cobertura",
+              descripcion: c.description || "Incluida",
+              grupo: c.group,
+            }))
+          : [
+              {
+                titulo: "Responsabilidad Civil Extracontractual",
+                descripcion: "Hasta $4.000.000.000",
+                grupo: "Cobertura Principal",
+              },
+              {
+                titulo: "Pérdida Total por Daños o Hurto",
+                descripcion: "100% del valor comercial",
+                grupo: "Cobertura Principal",
+              },
+              {
+                titulo: "Pérdida Parcial Daños / Hurto",
+                descripcion: "Deducible estándar 1.0 SMMLV",
+                grupo: "Deducibles",
+              },
+              {
+                titulo: "Asistencia en Viaje y Grúa",
+                descripcion: "Cobertura nacional 24/7",
+                grupo: "Asistencias",
+              },
+            ];
+
+        nuevasOfertas.push({
+          id: String(poliza.id || poliza.quote_id || idx),
+          aseguradora: poliza.insurer || "Aseguradora",
+          logoUrl: poliza.logo_url || poliza.logo,
+          planNombre: poliza.plan_name || "Póliza Todo Riesgo",
+          precioAnual: precio,
+          tipoCobertura: poliza.status || "Amplia",
+          deducible: "1.0 SMMLV",
+          coberturaRC: "$4.000.000.000",
+          coberturas,
+          status: poliza.status,
+          detailUrl: poliza.detail_url,
+          rawOfferData: poliza,
+        });
+      }
+      return;
+    }
+
+    // Compatibilidad con respuestas raw de Agente Motor / comparativos S3
     const producto = poliza.products?.[0] || poliza.offer || {};
     const rawCoverages: any[] = producto.coverages || [];
 

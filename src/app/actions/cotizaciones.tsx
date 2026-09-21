@@ -1,155 +1,359 @@
 "use server";
 
-async function obtenerTokenAgenteMotor(): Promise<string> {
-  const authPayload = {
-    username: process.env.AGENTE_MOTOR_USERNAME,
-    password: process.env.AGENTE_MOTOR_PASSWORD,
-    tenant: process.env.AGENTE_MOTOR_TENANT,
+import { sunriseClient } from "@/lib/api/sunriseClient";
+import {
+  DocumentType,
+  GenderType,
+  SunriseCreateQuoteRequest,
+  SunriseSelectQuoteRequest,
+  VehicleType,
+} from "@/lib/types/sunrise";
+
+export interface IniciarCotizacionParams {
+  vehiculo: {
+    tipoVehiculo?: VehicleType;
+    placa?: string;
+    esCeroKm?: boolean;
+    fasecoldaCode?: string;
+    brand?: string;
+    line?: string;
+    modelo?: string | number;
+    commercialPrice?: number | string;
+    referencePrice?: number | string;
+    useType?: string;
   };
-
-  const res = await fetch(
-    "https://apipro.agentemotor.com/app/co/customers/authentication",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(authPayload),
-      cache: "no-store",
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error("No se pudo autenticar con la plataforma de seguros.");
-  }
-
-  const data = await res.json();
-  return data.access_token || data["access token"];
+  personales: {
+    nombreCompleto?: string;
+    firstname?: string;
+    lastname?: string;
+    tipoDocumento?: DocumentType;
+    numeroDocumento?: string;
+    telefono?: string;
+    backupPhone?: string;
+    email?: string;
+    genero?: "M" | "F" | "masculino" | "femenino";
+    fechaNacimiento?: string;
+    cityCode?: string;
+    cityName?: string;
+    vencimientoPoliza?: string;
+    endosoBanco?: string;
+    esMismoAsegurado?: boolean;
+    aseguradoNombre?: string;
+    aseguradoEmail?: string;
+  };
 }
 
-export async function iniciarCotizacionAction(datos: any) {
+export async function iniciarCotizacionAction(datos: IniciarCotizacionParams) {
   try {
-    const token = await obtenerTokenAgenteMotor();
-    const tenant = process.env.AGENTE_MOTOR_TENANT;
     const { vehiculo, personales } = datos;
 
-    const emailContacto = process.env.NODE_ENV === "production" ? personales.email : "test@agentemotor.com";
-    const rawPhone = (personales.telefono || "").replace(/\D/g, "");
-    const formattedPhone = rawPhone.startsWith("57") ? `+${rawPhone}` : `+57${rawPhone}`;
-
-    const payloadQuotation = {
-      name: "event-create-quote",
-      tenant_data: {
-        name: tenant,
-        user_mail: process.env.AGENTE_MOTOR_USER_MAIL || "Intercolseguros@gmail.com",
-      },
-
-      data: {
-        business_line: "vehiculos",
-        insurable_objects: [
-          {
-            type: "vehicle",
-            vehicle: {
-              plate: vehiculo.esCeroKm ? "" : vehiculo.placa || "",
-              model: Number(vehiculo.modelo),
-              codification: { code: vehiculo.fasecoldaCode },
-              vehicle_risk: {
-                accesories_price: "0",
-                in_agency: Boolean(vehiculo.esCeroKm),
-                plate_type: "particular",
-                use_type: vehiculo.useType || "particular",
-                reference_price: Number(vehiculo.referencePrice || 0),
-                commercial_price: Number(vehiculo.referencePrice || 0),
-              },
-            },
-          },
-        ],
-        parties: [
-          {
-            party_rol: "Asegurado",
-            party_type: "person",
-            person: {
-              identification_type: personales.tipoDocumento || "CC",
-              identification_number: String(personales.numeroDocumento),
-              firstname: personales.firstname.toUpperCase(),
-              lastname: personales.lastname.toUpperCase(),
-              gender: personales.genero || "M",
-              birht_date: personales.fechaNacimiento, // Mantener el typo obligatorio de Agente Motor
-              //occupation: "Profesional Independiente",
-              // educational_level: "none",
-              contact_data: [
-                {
-                  contact_tag: "principal",
-                  contact_info: {
-                    email: emailContacto,
-                    phone: formattedPhone,
-                    ubication: {
-                      address_line1: "",
-                      place: { city_code: personales.cityCode || "76001", country_code: "170" },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-        ubication: { place: { city_code: personales.cityCode || "76001", country_code: "170" } },
-      },
-    };
-
-    const resQuote = await fetch("https://apipro.agentemotor.com/app/co/customers/quotation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(payloadQuotation),
-      cache: "no-store",
-    });
-
-    if (!resQuote.ok) {
-      return { success: false, error: "No se pudieron consultar las aseguradoras." };
+    if (!personales || !vehiculo) {
+      return {
+        success: false,
+        error: "Datos de vehículo o conductor incompletos.",
+      };
     }
 
-    const responseJson = await resQuote.json();
+    // Normalizar nombres
+    let firstName = (personales.firstname || "").trim();
+    let lastName = (personales.lastname || "").trim();
+
+    if (!firstName && personales.nombreCompleto) {
+      const parts = personales.nombreCompleto.trim().split(" ");
+      firstName = parts[0] || "";
+      lastName = parts.slice(1).join(" ") || parts[0] || "";
+    }
+
+    // Normalizar género
+    const genderMapped: GenderType =
+      personales.genero === "F" || personales.genero === "femenino"
+        ? "femenino"
+        : "masculino";
+
+    // Normalizar teléfono
+    const cleanPhone = (personales.telefono || "").replace(/\D/g, "");
+
+    const payload: SunriseCreateQuoteRequest = {
+      vehicle_type: vehiculo.tipoVehiculo || "carro",
+      consent: true,
+      plate: vehiculo.esCeroKm ? "" : (vehiculo.placa || "").trim().toUpperCase(),
+      is_0km: Boolean(vehiculo.esCeroKm),
+      fasecolda_code: vehiculo.fasecoldaCode || undefined,
+      brand: vehiculo.brand || undefined,
+      line: vehiculo.line || undefined,
+      model: vehiculo.modelo ? Number(vehiculo.modelo) : undefined,
+      commercial_value: Number(
+        vehiculo.commercialPrice || vehiculo.referencePrice || 0,
+      ) || undefined,
+      first_name: firstName,
+      last_name: lastName,
+      document_id: String(personales.numeroDocumento || "").trim(),
+      document_type: (personales.tipoDocumento as DocumentType) || "CC",
+      phone: cleanPhone,
+      backup_phone: personales.backupPhone || cleanPhone,
+      email: personales.email?.trim() || undefined,
+      birthday: personales.fechaNacimiento || "1990-01-01",
+      gender: genderMapped,
+      city: personales.cityName || "Bogotá",
+      city_code: personales.cityCode || undefined,
+    };
+
+    const res = await sunriseClient.createQuote(payload);
 
     return {
       success: true,
-      oppId: responseJson.opp_id,
-      jsonComparativoUrl: responseJson.json_comparativo,
-      pdfUrl: responseJson.url_pdf_comparativo,
-      token,
+      ticketId: res.ticket_id,
+      clientId: res.client_id,
+      vehicleId: res.vehicle_id,
+      status: res.status,
+      quoted: res.quoted,
+      pollAfterSeconds: res.poll_after_seconds || 5,
+      message: res.message,
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error("Error en iniciarCotizacionAction:", error);
+    return {
+      success: false,
+      error:
+        error.message ||
+        "No se pudo iniciar la cotización con el servicio de seguros.",
+    };
   }
 }
 
-export async function consultarOfertasRespaldoAction(
-  jsonComparativoUrl: string,
+const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".webp"];
+
+function validarArchivoFactura(
+  file: unknown
+): { valid: true; file: File } | { valid: false; error: string } {
+  if (!file || !(file instanceof File) || file.size === 0) {
+    return {
+      valid: false,
+      error: "Por favor adjunta la foto o PDF de la factura del vehículo.",
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return {
+      valid: false,
+      error: "El archivo adjunto supera el tamaño máximo permitido de 8 MB.",
+    };
+  }
+
+  const fileName = file.name || "";
+  const extension = "." + fileName.split(".").pop()?.toLowerCase();
+  const mimeType = file.type?.toLowerCase();
+
+  const isMimeValid = mimeType ? ALLOWED_MIME_TYPES.includes(mimeType) : false;
+  const isExtValid = ALLOWED_EXTENSIONS.includes(extension);
+
+  if (!isMimeValid && !isExtValid) {
+    return {
+      valid: false,
+      error: "Formato no permitido. Solo se aceptan archivos PDF, JPG, PNG o WEBP.",
+    };
+  }
+
+  return { valid: true, file };
+}
+
+
+// Inicia una cotización para un vehículo 0 km adjuntando la factura directamente en Sunrise CRM.
+
+export async function iniciarCotizacion0KmAction(
+  prevState: any,
+  formData: FormData,
 ) {
   try {
-    if (!jsonComparativoUrl) return { success: false, ofertas: [] };
+    const tipoVehiculo = (formData.get("tipoVehiculo")?.toString() || "carro") as VehicleType;
+    const nombreCompleto = (formData.get("nombreCompleto")?.toString() || "").trim();
+    const tipoDocumento = (formData.get("tipoDocumento")?.toString() || "CC") as DocumentType;
+    const numeroDocumento = (formData.get("numeroDocumento")?.toString() || "").trim();
+    const telefono = (formData.get("telefono")?.toString() || "").replace(/\D/g, "");
+    const email = (formData.get("email")?.toString() || "").trim();
+    const genero = formData.get("genero")?.toString() || "M";
+    const fechaNacimiento = (formData.get("fechaNacimiento")?.toString() || "1990-01-01").trim();
+    const cityCode = formData.get("cityCode")?.toString() || "";
+    const cityName = formData.get("cityName")?.toString() || "Bogotá";
+    const vencimientoPoliza = formData.get("vencimientoPoliza")?.toString() || "Ya mismo";
+    const endosoBanco = formData.get("endosoBanco")?.toString() || "No tiene endoso";
+    const esMismoAsegurado = formData.get("esMismoAsegurado")?.toString() !== "false";
+    const aseguradoNombre = formData.get("aseguradoNombre")?.toString() || "";
+    const aseguradoEmail = formData.get("aseguradoEmail")?.toString() || "";
 
-    const res = await fetch(jsonComparativoUrl, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    });
+    const invoiceFile = formData.get("invoice");
+    const fileValidation = validarArchivoFactura(invoiceFile);
 
-    if (!res.ok) {
-      return { success: false, ofertas: [] };
+    if (!fileValidation.valid) {
+      return {
+        success: false,
+        error: fileValidation.error,
+      };
     }
 
-    const data = await res.json();
+    if (!nombreCompleto || !numeroDocumento || !telefono) {
+      return {
+        success: false,
+        error: "Por favor completa todos los datos obligatorios del tomador.",
+      };
+    }
 
-    const rawOffers =
-      data.policy_list ||
-      data.sale_orders ||
-      data.offers ||
-      data.data ||
-      (Array.isArray(data) ? data : []);
+    const parts = nombreCompleto.split(" ");
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || parts[0] || "";
+    const genderMapped: GenderType =
+      genero === "F" || genero === "femenino" ? "femenino" : "masculino";
 
-    return { success: true, ofertas: rawOffers };
+    const sunriseFormData = new FormData();
+    sunriseFormData.append("vehicle_type", tipoVehiculo);
+    sunriseFormData.append("consent", "true");
+    sunriseFormData.append("is_0km", "true");
+    sunriseFormData.append("first_name", firstName);
+    sunriseFormData.append("last_name", lastName);
+    sunriseFormData.append("document_id", numeroDocumento);
+    sunriseFormData.append("document_type", tipoDocumento);
+    sunriseFormData.append("phone", telefono);
+    sunriseFormData.append("backup_phone", telefono);
+    if (email) sunriseFormData.append("email", email);
+    sunriseFormData.append("birthday", fechaNacimiento);
+    sunriseFormData.append("gender", genderMapped);
+    sunriseFormData.append("city", cityName);
+    if (cityCode) sunriseFormData.append("city_code", cityCode);
+    sunriseFormData.append("invoice", fileValidation.file);
+
+    const res = await sunriseClient.createQuote(sunriseFormData);
+
+    return {
+      success: true,
+      ticketId: res.ticket_id,
+      clientId: res.client_id,
+      vehicleId: res.vehicle_id,
+      status: res.status || "awaiting_advisor",
+      quoted: res.quoted || false,
+      pollAfterSeconds: res.poll_after_seconds || null,
+      message: res.message || "Cotización radicada para atención por asesor.",
+      personales: {
+        nombreCompleto,
+        firstname: firstName,
+        lastname: lastName,
+        tipoDocumento,
+        numeroDocumento,
+        telefono,
+        email,
+        genero: genderMapped,
+        fechaNacimiento,
+        cityCode,
+        cityName,
+        vencimientoPoliza,
+        endosoBanco,
+        esMismoAsegurado,
+        aseguradoNombre,
+        aseguradoEmail,
+      },
+    };
   } catch (error: any) {
-    console.error("Error en consulta de respaldo:", error.message);
-    return { success: false, ofertas: [] };
+    console.error("Error en iniciarCotizacion0KmAction:", error);
+    return {
+      success: false,
+      error: error.message || "No se pudo procesar la radicación de tu vehículo 0 km.",
+    };
+  }
+}
+
+
+// Consulta el estado y ofertas de un ticket en Sunrise CRM (Polling).
+
+export async function consultarEstadoCotizacionAction(
+  ticketId: number | string,
+) {
+  try {
+    if (!ticketId) {
+      return { success: false, error: "ID de ticket no proporcionado." };
+    }
+
+    const res = await sunriseClient.pollQuote(ticketId);
+
+    return {
+      success: true,
+      ticketId: res.ticket_id,
+      status: res.status, // "quoting" | "ready" | "awaiting_advisor" | "failed" | "selected" | "declined"
+      ticketState: res.ticket_state,
+      quotesReady: Boolean(res.quotes_ready || res.status === "ready"),
+      quotes: res.quotes || [],
+      comparativePdfUrl: res.comparative_pdf_url || null,
+      pollAfterSeconds: res.poll_after_seconds,
+      message: res.message,
+    };
+  } catch (error: any) {
+    console.error(`Error consultando ticket ${ticketId}:`, error);
+    return {
+      success: false,
+      error: error.message || "Error al consultar las cotizaciones.",
+    };
+  }
+}
+
+
+// Notifica la selección o declinación de una póliza.
+
+export async function seleccionarPolizaAction(
+  ticketId: number | string,
+  selection: SunriseSelectQuoteRequest,
+) {
+  try {
+    if (!ticketId) {
+      return { success: false, error: "ID de ticket requerido." };
+    }
+
+    const res = await sunriseClient.selectQuote(ticketId, selection);
+    return { success: true, data: res };
+  } catch (error: any) {
+    console.error(`Error al seleccionar póliza para ticket ${ticketId}:`, error);
+    return {
+      success: false,
+      error: error.message || "No se pudo registrar la selección de póliza.",
+    };
+  }
+}
+
+
+// Adjunta una factura a un ticket existente en Sunrise CRM.
+
+export async function adjuntarFacturaAction(
+  ticketId: number | string,
+  formData: FormData,
+) {
+  try {
+    if (!ticketId) {
+      return { success: false, error: "ID de ticket requerido." };
+    }
+
+    const file = formData.get("invoice") || formData.get("file");
+    if (file) {
+      const fileValidation = validarArchivoFactura(file);
+      if (!fileValidation.valid) {
+        return {
+          success: false,
+          error: fileValidation.error,
+        };
+      }
+    }
+
+    const res = await sunriseClient.uploadInvoice(ticketId, formData);
+    return { success: true, data: res };
+  } catch (error: any) {
+    console.error(`Error al adjuntar factura a ticket ${ticketId}:`, error);
+    return {
+      success: false,
+      error: error.message || "No se pudo subir la factura.",
+    };
   }
 }

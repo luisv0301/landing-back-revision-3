@@ -1,257 +1,23 @@
-'use server'
+'use server';
 
 import { z } from 'zod';
+import { sunriseClient } from '@/lib/api/sunriseClient';
+import { VehicleType } from '@/lib/types/sunrise';
 
-// Validación estricta con Zod
+// Validación con Zod
 const Paso1Schema = z.object({
-    placa: z.string().min(5, "Placa inválida").max(6).toUpperCase(),
+    placa: z.string().trim().toUpperCase().optional().default(''),
     tipoVehiculo: z.enum(['carro', 'moto', 'pesado']),
-    useType: z.string(),
+    useType: z.string().optional().default('particular'),
     esCeroKm: z.enum(['true', 'false']),
 });
 
 export type ActionState = {
     success?: boolean;
     error?: string;
+    requiresInvoice?: boolean;
     data?: any;
 };
-
-
-// Función auxiliar interna para autenticar y obtener el Bearer Token
-async function obtenerTokenAgenteMotor(): Promise<string> {
-    const authPayload = {
-        username: process.env.AGENTE_MOTOR_USERNAME,
-        password: process.env.AGENTE_MOTOR_PASSWORD,
-        tenant: process.env.AGENTE_MOTOR_TENANT, // ej: "agencia.co.agentemotor.com"[cite: 1]
-    };
-
-    const res = await fetch('https://apipro.agentemotor.com/app/co/customers/authentication', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(authPayload),
-        // next: { revalidate: 3600 } // Opcional: reusar token si es válido por 1 hora
-    });
-
-    if (!res.ok) {
-        throw new Error('Error al autenticar con Agente Motor');
-    }
-
-    const data = await res.json();
-    return data['access token']; // Retorna el Bearer token[cite: 1]
-}
-
-
-/*
-export async function consultarVehiculoAction(
-    prevState: ActionState | null,
-    formData: FormData
-): Promise<ActionState> {
-    const validatedFields = Paso1Schema.safeParse({
-        placa: formData.get('placa'),
-        tipoVehiculo: formData.get('tipoVehiculo'),
-        esCeroKm: formData.get('esCeroKm'),
-    });
-
-    if (!validatedFields.success) {
-        return { error: validatedFields.error.errors[0].message };
-    }
-
-    const { placa, tipoVehiculo, esCeroKm } = validatedFields.data;
-
-    try {
-        // 1. Aquí iría la llamada de autenticación (POST /app/co/customers/authentication)[cite: 1]
-        // 2. Consulta Fasecolda por placa (POST /seguros/co/vehiculos/datos_add)[cite: 1]
-
-        const payload = {
-            placa: placa,
-            consultas: ["fasecolda"] // Se pide explícitamente para evitar cobros extra por identif_vehiculo[cite: 1]
-        };
-
-        // MOCK para continuar el desarrollo
-        await new Promise((resolve) => setTimeout(resolve, 1200)); // Simulamos latencia de red
-
-        return {
-            success: true,
-            data: {
-                placa,
-                tipoVehiculo,
-                esCeroKm: esCeroKm === 'true',
-                fasecolda: { brand: "KIA", model: "2020", line: "PICANTO" }
-            }
-        };
-    } catch (error) {
-        return { error: "No pudimos encontrar los datos del vehículo. Intenta de nuevo." };
-    }
-}
-
-*/
-
-export async function consultarVehiculoAction(
-    prevState: ActionState | null,
-    formData: FormData
-): Promise<ActionState> {
-    const validatedFields = Paso1Schema.safeParse({
-        placa: formData.get('placa'),
-        tipoVehiculo: formData.get('tipoVehiculo'),
-        useType: formData.get('useType') || 'particular',
-        esCeroKm: formData.get('esCeroKm'),
-    });
-
-    if (!validatedFields.success) {
-        return {
-            error: validatedFields.error.issues[0]?.message || 'Datos del vehículo inválidos'
-        };
-    }
-
-    const { placa, tipoVehiculo, useType, esCeroKm } = validatedFields.data;
-
-    try {
-        // 1. Obtener Token de autenticación
-        //const token = await obtenerTokenAgenteMotor();
-        /* 
-        const headers = {
-           'Content-Type': 'application/json',
-           'Authorization': `Bearer ${token}`
-         };
-     
-         
-     
-         // 2. Primer llamado: Consultar datos básicos por Placa para obtener Código Fasecolda y Modelo[cite: 1]
-         const resPlaca = await fetch('https://apipro.agentemotor.com/seguros/co/vehiculos/datos_add', {
-           method: 'POST',
-           headers,
-           body: JSON.stringify({
-             placa: placa,
-             consultas: ["fasecolda"] // Solo fasecolda para no generar cobros extra[cite: 1]
-           }),
-         });
-     
-         */
-
-        const resPlaca = await fetch('https://apipro.agentemotor.com/seguros/co/vehiculos/datos_add', {
-            method: 'POST',
-            body: JSON.stringify({
-                placa: placa,
-                consultas: ["fasecolda"] // Solo fasecolda para no generar cobros extra[cite: 1]
-            }),
-        });
-
-        if (!resPlaca.ok) {
-            return { error: 'No se encontraron datos para la placa ingresada.' };
-        }
-
-        const dataPlaca = await resPlaca.json();
-        const vehicleData = dataPlaca?.data?.vehicle;
-
-        const codigoFasecolda = vehicleData?.codification?.code || vehicleData?.vehicle_codification?.code;
-        const modeloVehiculo = vehicleData?.model;
-
-        if (!codigoFasecolda || !modeloVehiculo) {
-            return { error: 'No fue posible homologar el código Fasecolda para este vehículo.' };
-        }
-
-        // 3. Segundo llamado: Consultar la Ficha Técnica de Fasecolda detallada[cite: 1]
-        const urlFasecolda = `https://apipro.agentemotor.com/seguros/co/vehicles/consultar/fasecolda-modelo?fasecolda=${codigoFasecolda}&modelo=${modeloVehiculo}&ceroKm=${esCeroKm}`;
-
-        const resFasecolda = await fetch(urlFasecolda);
-
-        if (!resFasecolda.ok) {
-            return { error: 'Error al consultar la información detallada de Fasecolda.' };
-        }
-
-        const dataFasecolda = await resFasecolda.json();
-        const detalleVehiculo = dataFasecolda?.data?.vehicle;
-
-        // 4. Retornar los datos consolidados al cliente
-        return {
-            success: true,
-            data: {
-                placa,
-                tipoVehiculo,
-                esCeroKm: esCeroKm === 'true',
-                fasecoldaCode: codigoFasecolda,
-                modelo: modeloVehiculo,
-                useType,
-                // Datos extraídos de la respuesta de Fasecolda:
-                brand: detalleVehiculo?.brand,
-                line: detalleVehiculo?.line,
-                referencePrice: detalleVehiculo?.vehicle_risk?.reference_price,
-                imagen: detalleVehiculo?.imagen?.codigo_foto?.[0]?.nombre,
-                rawFasecolda: detalleVehiculo
-            }
-        };
-
-    } catch (error: any) {
-        console.error("Error en Server Action consultarVehiculoAction:", error);
-        return { error: "Ocurrió un error de conexión al consultar el vehículo." };
-    }
-}
-
-
-// Obtener lista de marcas disponibles
-export async function obtenerMarcasAction() {
-    try {
-        // const token = await obtenerTokenAgenteMotor();
-        /*
-         const res = await fetch('https://apipro.agentemotor.com/seguros/co/vehicles/consultar/lista-marcas', {
-             headers: { Authorization: `Bearer ${token}` }
-         });
-         */
-
-        const res = await fetch('https://apipro.agentemotor.com/seguros/co/vehicles/consultar/lista-marcas');
-        const marcas: string[] = await res.json();
-        return { success: true, marcas };
-    } catch (error) {
-        return { error: 'Error cargando marcas' };
-    }
-}
-
-// Obtener referencias por marca y modelo
-export async function obtenerReferenciasAction(marca: string, modelo: number) {
-    try {
-        //const token = await obtenerTokenAgenteMotor();
-
-        /*
- const url = `https://apipro.agentemotor.com/seguros/co/vehicles/consultar/lista-ref-abr?marca=${encodeURIComponent(marca)}&modelo=${modelo}`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        */
-        const url = `https://apipro.agentemotor.com/seguros/co/vehicles/consultar/lista-ref-abr?marca=${encodeURIComponent(marca)}&modelo=${modelo}`;
-        const res = await fetch(url);
-        const referencias: string[] = await res.json();
-        console.log("referencias", referencias);
-        return { success: true, referencias };
-    } catch (error) {
-        return { error: 'Error cargando referencias' };
-    }
-}
-
-// Obtener versiones exactas con código Fasecolda
-export async function obtenerVersionesAction(marca: string, modelo: number, ref: string) {
-    try {
-        //const token = await obtenerTokenAgenteMotor();
-        /*
- const url = `https://apipro.agentemotor.com/seguros/co/vehicles/consultar/vehiculos-por-caracteristica?marca=${encodeURIComponent(marca)}&modelo=${modelo}&ref=${encodeURIComponent(ref)}&ceroKm=true`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });    
-        */
-        const url = `https://apipro.agentemotor.com/seguros/co/vehicles/consultar/vehiculos-por-caracteristica?marca=${encodeURIComponent(marca)}&modelo=${modelo}&ref=${encodeURIComponent(ref)}&ceroKm=true`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        console.log("la data de obtener versiones", JSON.stringify(data, null, 2));
-
-        // Mapeamos las versiones devueltas
-        const versiones = data.map((item: any) => ({
-            code: item.data?.vehicle?.codification?.code,
-            lineaCompleta: item.data?.vehicle?.line,
-            precioReferencia: item.data?.vehicle?.vehicle_risk?.reference_price,
-        }));
-
-        return { success: true, versiones };
-    } catch (error) {
-        return { error: 'Error cargando versiones' };
-    }
-}
-
 
 export interface MunicipioDIVIPOLA {
     city_code: string;
@@ -259,35 +25,193 @@ export interface MunicipioDIVIPOLA {
     state_name: string;
 }
 
+/**
+ * Consulta información de vehículo mediante la nueva API de Sunrise CRM.
+ */
+export async function consultarVehiculoAction(
+    prevState: ActionState | null,
+    formData: FormData
+): Promise<ActionState> {
+    const rawPlaca = (formData.get('placa')?.toString() || '').trim().toUpperCase();
+    const tipoVehiculo = formData.get('tipoVehiculo')?.toString() || 'carro';
+    const useType = formData.get('useType')?.toString() || 'particular';
+    const esCeroKm = formData.get('esCeroKm')?.toString() || 'false';
+
+    const validatedFields = Paso1Schema.safeParse({
+        placa: rawPlaca,
+        tipoVehiculo,
+        useType,
+        esCeroKm,
+    });
+
+    if (!validatedFields.success) {
+        return {
+            error: validatedFields.error.issues[0]?.message || 'Datos del vehículo inválidos',
+        };
+    }
+
+    const is0Km = esCeroKm === 'true';
+
+    // Si es 0km no requiere consulta de placa obligatoria
+    if (is0Km) {
+        return {
+            success: true,
+            data: {
+                placa: '',
+                tipoVehiculo: tipoVehiculo as VehicleType,
+                useType,
+                esCeroKm: true,
+                fasecoldaCode: formData.get('fasecoldaCode')?.toString() || '',
+                modelo: formData.get('modelo')?.toString() || new Date().getFullYear().toString(),
+                brand: formData.get('brand')?.toString() || '',
+                line: formData.get('line')?.toString() || '',
+                commercialPrice: Number(formData.get('commercialPrice') || 0),
+                referencePrice: Number(formData.get('commercialPrice') || 0),
+            },
+        };
+    }
+
+    if (!rawPlaca || rawPlaca.length < 5 || rawPlaca.length > 6) {
+        return { error: 'Ingresa una placa válida (5 a 6 caracteres).' };
+    }
+
+    try {
+        const lookup = await sunriseClient.lookupVehicle(rawPlaca);
+
+        console.log("resultados de buscar vehiculo", lookup)
+
+        if (lookup.code === 'public_vehicle') {
+            return {
+                error: 'No se cotizan vehículos de servicio público.',
+            };
+        }
+
+
+
+        if (lookup.found) {
+            return {
+                success: true,
+                data: {
+                    placa: lookup.plate || rawPlaca,
+                    tipoVehiculo: tipoVehiculo as VehicleType,
+                    useType,
+                    esCeroKm: false,
+                    fasecoldaCode: lookup.fasecolda_code || '',
+                    brand: lookup.brand || '',
+                    line: lookup.line || '',
+                    modelo: lookup.model || '',
+                    commercialPrice: lookup.commercial_value || 0,
+                    referencePrice: lookup.commercial_value || 0,
+                    requiresInvoice: lookup.requires_invoice,
+                    rawLookup: lookup,
+                },
+            };
+        }
+
+        // Si found=false -> requires_invoice=true
+        return {
+            success: false,
+            requiresInvoice: true,
+            error: lookup.message || 'Vehículo no encontrado en Fasecolda. Puedes adjuntar la factura para cotizar.',
+        };
+    } catch (error: any) {
+        console.error('Error en consultarVehiculoAction:', error);
+
+        if (error.code === 'public_vehicle') {
+            return { error: 'No se cotizan vehículos de servicio público.' };
+        }
+
+        return {
+            error: error.message || 'No fue posible consultar el vehículo. Intenta nuevamente.',
+            requiresInvoice: error.data?.requires_invoice || false,
+        };
+    }
+}
+
+/**
+ * Busca municipios DIVIPOLA en Sunrise CRM.
+ */
 export async function buscarCiudadesAction(query: string) {
     if (!query) return { success: true, ciudades: [] };
 
-    // Normalizar tildes y limpiar caracteres especiales o sufijos de país/departamento
     const textoLimpio = query
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .split(/[,(]/)[0]
         .trim();
 
-    if (textoLimpio.length < 3) return { success: true, ciudades: [] };
+    if (textoLimpio.length < 2) return { success: true, ciudades: [] };
 
     try {
-        const url = `https://apipro.agentemotor.com/seguros/geozone/co/?city_name_like=${encodeURIComponent(textoLimpio)}`;
-
-        const res = await fetch(url);
-
-        if (!res.ok) throw new Error('Error consultando ciudades');
-
-        const data = await res.json();
-        const ciudades: MunicipioDIVIPOLA[] = (data.response || []).map((c: any) => ({
+        const data = await sunriseClient.searchCities(textoLimpio, 30);
+        const ciudades: MunicipioDIVIPOLA[] = (data.results || []).map((c) => ({
             city_code: c.city_code,
-            city_name: c.city_name,
-            state_name: c.state_name,
+            city_name: c.city,
+            state_name: c.department,
         }));
 
         return { success: true, ciudades };
-    } catch (error) {
-        console.error("Error en buscarCiudadesAction:", error);
-        return { error: 'No se pudieron cargar las ciudades' };
+    } catch (error: any) {
+        console.error('Error en buscarCiudadesAction:', error);
+        return { error: error.message || 'No se pudieron cargar las ciudades' };
     }
+}
+
+// Helpers para compatibilidad en catálogo 0 km
+const MARCAS_DESTACADAS = [
+    'CHEVROLET',
+    'RENAULT',
+    'MAZDA',
+    'KIA',
+    'TOYOTA',
+    'NISSAN',
+    'HYUNDAI',
+    'VOLKSWAGEN',
+    'FORD',
+    'SUZUKI',
+    'BMW',
+    'MERCEDES BENZ',
+    'AUDI',
+    'HONDA',
+    'YAMAHA',
+    'BAJAJ',
+    'AKT',
+    'AUTECO',
+    'HINO',
+    'FOTON',
+    'JAC',
+    'ISUZU',
+    'KENWORTH',
+    'INTERNATIONAL',
+];
+
+export async function obtenerMarcasAction() {
+    return { success: true, marcas: MARCAS_DESTACADAS };
+}
+
+export async function obtenerReferenciasAction(marca: string, modelo: number) {
+    return {
+        success: true,
+        referencias: [
+            `${marca} LÍNEA PRINCIPAL`,
+            `${marca} VERSIÓN ESPECIAL`,
+        ],
+    };
+}
+
+export async function obtenerVersionesAction(
+    marca: string,
+    modelo: number,
+    ref: string
+) {
+    return {
+        success: true,
+        versiones: [
+            {
+                code: '00000000',
+                lineaCompleta: `${marca} ${ref} ${modelo}`,
+                precioReferencia: 0,
+            },
+        ],
+    };
 }
