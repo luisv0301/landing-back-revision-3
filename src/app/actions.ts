@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { sunriseClient } from '@/lib/api/sunriseClient';
 import { VehicleType } from '@/lib/types/sunrise';
+import { registrarLeadAction } from '@/app/actions/leads';
 
 // Validación con Zod
 const Paso1Schema = z.object({
@@ -109,6 +110,12 @@ export async function consultarVehiculoAction(
         }
 
         // Si found=false -> requires_invoice=true
+        void registrarLeadAction({
+            vehicle_type: tipoVehiculo as VehicleType,
+            plate: rawPlaca,
+            funnel_stage: 'vehicle_not_found',
+        });
+
         return {
             success: false,
             requiresInvoice: true,

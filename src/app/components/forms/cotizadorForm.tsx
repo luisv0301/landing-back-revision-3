@@ -11,8 +11,7 @@ import Step4Ofertas from "./step4Ofertas";
 import { seleccionarPolizaAction } from "@/app/actions/cotizaciones";
 import { registrarLeadAction } from "@/app/actions/leads";
 import { toast } from "@/components/ui/toast";
-
-
+import { useMountEffect } from "@/lib/hooks/useMountEffect";
 
 const PASOS = [
   { id: 1, title: "Cotiza" },
@@ -44,6 +43,15 @@ export default function CotizadorForm({
   const [, startTransition] = useTransition();
   const router = useRouter();
 
+  useMountEffect(() => {
+    startTransition(async () => {
+      await registrarLeadAction({
+        vehicle_type: initialTipo,
+        funnel_stage: "started",
+      });
+    });
+  });
+
   const handleBack = () => {
     if (step > 1) {
       if (datosCotizacion.vehiculo?.esCeroKm && step === 4) {
@@ -64,9 +72,7 @@ export default function CotizadorForm({
         vehicle_type: dataVehiculo.tipoVehiculo || initialTipo,
         funnel_stage: dataVehiculo.esCeroKm
           ? "vehicle_selected"
-          : dataVehiculo.requiresInvoice
-            ? "vehicle_not_found"
-            : "vehicle_found",
+          : "vehicle_found",
         plate: dataVehiculo.placa || undefined,
       });
     });
@@ -378,7 +384,16 @@ export default function CotizadorForm({
               <Step2Verifica
                 key="step2"
                 vehiculo={datosCotizacion.vehiculo}
-                onNext={() => setStep(3)}
+                onNext={() => {
+                  setStep(3);
+                  startTransition(async () => {
+                    await registrarLeadAction({
+                      vehicle_type: datosCotizacion.vehiculo?.tipoVehiculo || initialTipo,
+                      funnel_stage: "data_started",
+                      plate: datosCotizacion.vehiculo?.placa || undefined,
+                    });
+                  });
+                }}
               />
             )}
 
