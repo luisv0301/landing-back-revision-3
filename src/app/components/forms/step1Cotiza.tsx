@@ -383,7 +383,7 @@ export default function Step1Cotiza({
                         id="pesado"
                         label="Pesado"
                         icon={<Image
-                            src="/images/carro.svg"
+                            src="/images/pesado.svg"
                             alt="Icono de vehículo pesado"
                             width={60}
                             height={60}

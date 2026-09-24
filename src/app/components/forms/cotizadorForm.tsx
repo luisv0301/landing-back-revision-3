@@ -22,10 +22,14 @@ const PASOS = [
 
 interface CotizadorFormProps {
   initialTipo?: "carro" | "moto" | "pesado";
+  rating?: number;
+  userRatingTotal?: number;
 }
 
 export default function CotizadorForm({
   initialTipo = "carro",
+  rating = 4.9,
+  userRatingTotal = 3558,
 }: CotizadorFormProps) {
   const [step, setStep] = useState(1);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -424,9 +428,9 @@ export default function CotizadorForm({
                 <Star key={i} size={16} fill="currentColor" />
               ))}
             </div>
-            <span>4.9 en Google</span>
+            <span>{rating} en Google</span>
             <span className="text-gray-400 font-normal pl-12">
-              3.558 reviews
+              {new Intl.NumberFormat("es-CO").format(userRatingTotal)} reviews
             </span>
           </div>
         </main>
