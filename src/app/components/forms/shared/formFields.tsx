@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MunicipioDIVIPOLA } from "@/app/actions";
-import { DocumentType } from "@/lib/types/sunrise";
-import { Search, X } from "lucide-react";
+import { DocumentType, PolicyExpiresCode } from "@/lib/types/sunrise";
+import { Search, X, UserCheck, RotateCcw } from "lucide-react";
 
 // Subcomponente: Formulario de Datos del Tomador
 export function DatosTomadorFields({
@@ -157,94 +158,6 @@ export function DatosTomadorFields({
   );
 }
 
-// Subcomponente: Sección Asegurado Mismo/Diferente
-export function DatosAseguradoFields({
-  esMismoAsegurado,
-  onChangeEsMismoAsegurado,
-  aseguradoNombre,
-  onChangeAseguradoNombre,
-  aseguradoEmail,
-  onChangeAseguradoEmail,
-}: {
-  esMismoAsegurado: boolean;
-  onChangeEsMismoAsegurado: (val: boolean) => void;
-  aseguradoNombre: string;
-  onChangeAseguradoNombre: (val: string) => void;
-  aseguradoEmail: string;
-  onChangeAseguradoEmail: (val: string) => void;
-}) {
-  return (
-    <div className="space-y-3 border-t border-b border-gray-100 py-4">
-      <Label className="text-sm font-semibold">
-        ¿El asegurado es la misma persona que diligencia los datos? *
-      </Label>
-      <input
-        type="hidden"
-        name="esMismoAsegurado"
-        value={esMismoAsegurado.toString()}
-      />
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          type="button"
-          onClick={() => onChangeEsMismoAsegurado(true)}
-          className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input cursor-pointer ${
-            esMismoAsegurado
-              ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
-              : "border-gray-200 bg-white"
-          }`}
-        >
-          Sí
-        </Button>
-        <Button
-          type="button"
-          onClick={() => onChangeEsMismoAsegurado(false)}
-          className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input cursor-pointer ${
-            !esMismoAsegurado
-              ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
-              : "border-gray-200 bg-white"
-          }`}
-        >
-          No (Es otra persona)
-        </Button>
-      </div>
-
-      {!esMismoAsegurado && (
-        <div className="space-y-4 mt-2 bg-gray-50 py-6 px-4 rounded-2xl border border-gray-200">
-          <h3 className="text-sm font-bold text-gray-800">
-            Datos de quien diligencia los datos
-          </h3>
-          <div className="space-y-4">
-            <Label htmlFor="aseguradoNombre">Nombre completo *</Label>
-            <Input
-              id="aseguradoNombre"
-              name="aseguradoNombre"
-              value={aseguradoNombre}
-              onChange={(e) => onChangeAseguradoNombre(e.target.value)}
-              required={!esMismoAsegurado}
-              spellCheck={false}
-              className="uppercase bg-white p-6 rounded-full text-sm"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="aseguradoEmail">Email *</Label>
-            <Input
-              id="aseguradoEmail"
-              name="aseguradoEmail"
-              type="email"
-              inputMode="email"
-              spellCheck={false}
-              value={aseguradoEmail}
-              onChange={(e) => onChangeAseguradoEmail(e.target.value)}
-              required={!esMismoAsegurado}
-              className="uppercase bg-white p-6 rounded-full text-sm"
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // Subcomponente: Input y Búsqueda de Ciudad de Circulación
 export function CiudadCirculacionInput({
   ciudadSeleccionada,
@@ -341,30 +254,30 @@ export function CiudadCirculacionInput({
 }
 
 // Subcomponente: Condiciones de la Póliza (Vencimiento y Endoso)
+export const OPCIONES_VENCIMIENTO: Array<{ code: PolicyExpiresCode; label: string }> = [
+  { code: "now", label: "Ya mismo" },
+  { code: "week", label: "En una semana" },
+  { code: "15_30", label: "15-30 días" },
+  { code: "over_30", label: "Más de 30 días" },
+  { code: "none", label: "No tengo póliza actualmente" },
+];
+
+export const OPCIONES_ENDOSO: Array<{ value: boolean; label: string }> = [
+  { value: true, label: "Sí, tiene endoso a favor de un banco" },
+  { value: false, label: "No tiene endoso" },
+];
+
 export function CondicionesPolizaFields({
-  vencimientoPoliza,
+  vencimientoPoliza = "now",
   onChangeVencimiento,
-  endosoBanco,
+  endosoBanco = false,
   onChangeEndoso,
 }: {
-  vencimientoPoliza: string;
-  onChangeVencimiento: (val: string) => void;
-  endosoBanco: string;
-  onChangeEndoso: (val: string) => void;
+  vencimientoPoliza: PolicyExpiresCode;
+  onChangeVencimiento: (val: PolicyExpiresCode) => void;
+  endosoBanco: boolean;
+  onChangeEndoso: (val: boolean) => void;
 }) {
-  const OPCIONES_VENCIMIENTO = [
-    "Ya mismo",
-    "En 1 semana",
-    "15-30 días",
-    "Más de 30 días",
-    "No tengo póliza actualmente",
-  ];
-
-  const OPCIONES_ENDOSO = [
-    { id: "endoso", label: "Sí, tiene endoso a favor de un banco" },
-    { id: "sin_endoso", label: "No tiene endoso" },
-  ];
-
   return (
     <>
       <div className="pt-2 space-y-3 border-t border-gray-100">
@@ -373,22 +286,27 @@ export function CondicionesPolizaFields({
         </Label>
         <input
           type="hidden"
-          name="vencimientoPoliza"
+          name="policyExpires"
           value={vencimientoPoliza}
+        />
+        <input
+          type="hidden"
+          name="hasCurrentPolicy"
+          value={vencimientoPoliza !== "none" ? "true" : "false"}
         />
         <div className="space-y-1.5 md:grid md:grid-cols-2 md:gap-2">
           {OPCIONES_VENCIMIENTO.map((op) => (
             <Button
-              key={op}
+              key={op.code}
               type="button"
-              onClick={() => onChangeVencimiento(op)}
+              onClick={() => onChangeVencimiento(op.code)}
               className={`w-full text-left p-6 rounded-full border text-sm font-medium transition-all shadow-xs border-input cursor-pointer ${
-                vencimientoPoliza === op
+                vencimientoPoliza === op.code
                   ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
                   : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
               }`}
             >
-              {op}
+              {op.label}
             </Button>
           ))}
         </div>
@@ -396,15 +314,19 @@ export function CondicionesPolizaFields({
 
       <div className="space-y-2">
         <Label className="text-sm font-semibold">Condición Financiera</Label>
-        <input type="hidden" name="endosoBanco" value={endosoBanco} />
+        <input
+          type="hidden"
+          name="bankEndorsement"
+          value={endosoBanco ? "true" : "false"}
+        />
         <div className="space-y-1.5">
           {OPCIONES_ENDOSO.map((op) => (
             <Button
-              key={op.id}
+              key={op.label}
               type="button"
-              onClick={() => onChangeEndoso(op.label)}
+              onClick={() => onChangeEndoso(op.value)}
               className={`w-full text-left p-6 rounded-full text-sm font-medium transition-all shadow-xs border border-input cursor-pointer ${
-                endosoBanco === op.label
+                endosoBanco === op.value
                   ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
                   : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
               }`}
@@ -415,5 +337,54 @@ export function CondicionesPolizaFields({
         </div>
       </div>
     </>
+  );
+}
+
+// Subcomponente: Tarjeta de Notificación para Cotizaciones 0 km o Tickets que esperan Asesor
+export function OfertaAwaitingAdvisorCard({
+  ticketId,
+  onReset,
+}: {
+  ticketId?: number | string;
+  onReset?: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full bg-white rounded-3xl border border-gray-200 p-8 text-center space-y-6 shadow-xs max-w-xl mx-auto"
+    >
+      <div className="mx-auto bg-yellow-100 w-16 h-16 flex items-center justify-center rounded-full">
+        <UserCheck size={32} className="text-yellow-700" />
+      </div>
+
+      <div className="space-y-2 max-w-md mx-auto">
+        <h3 className="text-xl font-bold text-gray-900">
+          Un asesor te contactará a la brevedad
+        </h3>
+        <p className="text-gray-600 text-sm">
+          Hemos recibido tu solicitud y un especialista de Segurautos revisará las opciones y te contactará con la mejor tarifa disponible.
+        </p>
+        {ticketId && (
+          <div className="inline-block mt-3 px-4 py-1.5 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
+            Radicado de Solicitud: #{ticketId}
+          </div>
+        )}
+      </div>
+
+      {onReset && (
+        <div className="pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onReset}
+            className="rounded-full px-6 py-2 text-sm text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer"
+          >
+            <RotateCcw size={16} className="mr-2" />
+            Cotizar otro vehículo
+          </Button>
+        </div>
+      )}
+    </motion.div>
   );
 }

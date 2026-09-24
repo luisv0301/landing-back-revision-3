@@ -16,6 +16,7 @@ export interface FormState {
 export async function registrarLeadAction(leadData: SunriseLeadRequest) {
     try {
         const res = await sunriseClient.createLead(leadData);
+        console.log("respuesta de registro de lead", res);
         return { success: true, data: res };
     } catch (error: any) {
         // Los leads no deben romper el flujo del usuario si fallan

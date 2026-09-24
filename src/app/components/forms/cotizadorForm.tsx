@@ -1,22 +1,24 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, ChevronDown, Lock, Star, Check, PhoneCall } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, Lock, Star } from "lucide-react";
 import Step1Cotiza from "./step1Cotiza";
 import Step2Verifica from "./step2Verifica";
 import Step3DatosPersonales from "./step3DatosPersonales";
 import Step4Ofertas from "./step4Ofertas";
 import { seleccionarPolizaAction } from "@/app/actions/cotizaciones";
 import { registrarLeadAction } from "@/app/actions/leads";
-import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
+
+
 
 const PASOS = [
   { id: 1, title: "Cotiza" },
   { id: 2, title: "Verifica" },
   { id: 3, title: "Completa datos" },
   { id: 4, title: "Ofertas" },
-  { id: 5, title: "Confirmación" },
 ];
 
 interface CotizadorFormProps {
@@ -40,6 +42,7 @@ export default function CotizadorForm({
   }>({});
 
   const [, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleBack = () => {
     if (step > 1) {
@@ -59,7 +62,11 @@ export default function CotizadorForm({
     startTransition(async () => {
       await registrarLeadAction({
         vehicle_type: dataVehiculo.tipoVehiculo || initialTipo,
-        funnel_stage: dataVehiculo.requiresInvoice ? "vehicle_not_found" : "vehicle_found",
+        funnel_stage: dataVehiculo.esCeroKm
+          ? "vehicle_selected"
+          : dataVehiculo.requiresInvoice
+            ? "vehicle_not_found"
+            : "vehicle_found",
         plate: dataVehiculo.placa || undefined,
       });
     });
@@ -74,8 +81,6 @@ export default function CotizadorForm({
       status: datos.status,
       message: datos.message,
     }));
-    // Salta directamente al paso de ofertas / radicación
-    setStep(4);
 
     startTransition(async () => {
       await registrarLeadAction({
@@ -119,16 +124,21 @@ export default function CotizadorForm({
       ...prev,
       ofertaSeleccionada: ofertaElegida,
     }));
-    setStep(5);
+
+    const insurer = ofertaElegida.insurer || ofertaElegida.aseguradora || "";
+    const planName = ofertaElegida.plan_name || ofertaElegida.planNombre || "";
+    const premium = Number(ofertaElegida.premium || ofertaElegida.precioAnual || 0);
+    const quoteId = Number(ofertaElegida.id) || undefined;
 
     startTransition(async () => {
       if (datosCotizacion.ticketId) {
-        await seleccionarPolizaAction(datosCotizacion.ticketId, {
-          insurer: ofertaElegida.aseguradora,
-          plan_name: ofertaElegida.planNombre,
-          premium: ofertaElegida.precioAnual,
-          quote_id: Number(ofertaElegida.id) || undefined,
+        const resp = await seleccionarPolizaAction(datosCotizacion.ticketId, {
+          insurer,
+          plan_name: planName,
+          premium,
+          quote_id: quoteId,
         });
+        console.log("respuesta de seleccion poliza", resp);
 
         await registrarLeadAction({
           vehicle_type: datosCotizacion.vehiculo?.tipoVehiculo || initialTipo,
@@ -138,17 +148,30 @@ export default function CotizadorForm({
           email: datosCotizacion.personales?.email,
           plate: datosCotizacion.vehiculo?.placa,
         });
+
+        if (resp.success) {
+          const params = new URLSearchParams();
+          if (insurer) params.set("insurer", insurer);
+          if (planName) params.set("plan", planName);
+          if (premium > 0) params.set("premium", String(premium));
+          if (datosCotizacion.ticketId) params.set("ticketId", String(datosCotizacion.ticketId));
+
+          router.push(`/confirmacion?${params.toString()}`);
+        } else {
+          toast.add({
+            title: "Error al seleccionar la póliza",
+            description:
+              resp.error ||
+              "No se pudo registrar la selección de tu oferta. Por favor intenta de nuevo.",
+            type: "error",
+          });
+        }
       }
     });
   };
 
   const isStepAccessible = (targetStep: number) => {
     if (targetStep === 1) return true;
-    if (datosCotizacion.vehiculo?.esCeroKm) {
-      if (targetStep === 4) return Boolean(datosCotizacion.ticketId);
-      if (targetStep === 5) return Boolean(datosCotizacion.ofertaSeleccionada);
-      return false;
-    }
     if (targetStep === 2) return Boolean(datosCotizacion.vehiculo);
     if (targetStep === 3) return Boolean(datosCotizacion.vehiculo);
     if (targetStep === 4)
@@ -156,7 +179,6 @@ export default function CotizadorForm({
         datosCotizacion.vehiculo &&
         (datosCotizacion.personales || datosCotizacion.ticketId)
       );
-    if (targetStep === 5) return Boolean(datosCotizacion.ofertaSeleccionada);
     return false;
   };
 
@@ -379,17 +401,6 @@ export default function CotizadorForm({
                 pdfUrl={datosCotizacion.pdfUrl}
               />
             )}
-
-            {step === 5 && (
-              <Step5Confirmacion
-                key="step5"
-                datosCotizacion={datosCotizacion}
-                onReset={() => {
-                  setDatosCotizacion({});
-                  setStep(1);
-                }}
-              />
-            )}
           </AnimatePresence>
 
           <div className="mt-8 flex items-center justify-center space-x-2 text-sm text-gray-600 font-medium">
@@ -406,80 +417,5 @@ export default function CotizadorForm({
         </main>
       </div>
     </div>
-  );
-}
-
-function Step5Confirmacion({
-  datosCotizacion,
-  onReset,
-}: {
-  datosCotizacion: any;
-  onReset: () => void;
-}) {
-  const oferta = datosCotizacion.ofertaSeleccionada;
-  const precioFormateado = new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  }).format(Number(oferta?.precioAnual || 0));
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-6 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm"
-    >
-      <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-600">
-        <Check size={32} strokeWidth={3} />
-      </div>
-
-      <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          ¡Excelente elección!
-        </h1>
-        <p className="text-gray-600 text-sm">
-          Has seleccionado la póliza de{" "}
-          <strong className="text-black">{oferta?.aseguradora || "tu aseguradora preferida"}</strong>{" "}
-          ({oferta?.planNombre || "Todo Riesgo"}).
-        </p>
-      </div>
-
-      {datosCotizacion.ticketId && (
-        <div className="px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-full text-xs font-semibold text-yellow-900">
-          Radicado Sunrise CRM: #{datosCotizacion.ticketId}
-        </div>
-      )}
-
-      <div className="w-full bg-gray-50 rounded-2xl p-6 border border-gray-200 text-left space-y-3">
-        <div className="flex justify-between items-center border-b border-gray-200 pb-3">
-          <span className="text-sm text-gray-600">Aseguradora</span>
-          <span className="text-sm font-bold text-gray-900">{oferta?.aseguradora}</span>
-        </div>
-        <div className="flex justify-between items-center border-b border-gray-200 pb-3">
-          <span className="text-sm text-gray-600">Plan</span>
-          <span className="text-sm font-bold text-gray-900">{oferta?.planNombre}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Prima Anual</span>
-          <span className="text-lg font-bold text-gray-900 tabular-nums">{precioFormateado}</span>
-        </div>
-      </div>
-
-      <div className="space-y-3 w-full pt-2">
-        <div className="flex items-center justify-center space-x-2 text-xs text-gray-600">
-          <PhoneCall size={14} className="text-green-600" />
-          <span>Un asesor especializado se comunicará contigo para finalizar la emisión.</span>
-        </div>
-
-        <Button
-          type="button"
-          onClick={onReset}
-          variant="outline"
-          className="w-full rounded-full p-6 text-sm font-semibold border-gray-300 hover:bg-gray-100 cursor-pointer"
-        >
-          Realizar otra cotización
-        </Button>
-      </div>
-    </motion.div>
   );
 }

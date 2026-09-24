@@ -3,21 +3,27 @@
 import { useState, useTransition } from 'react';
 import { useActionState } from 'react';
 import Image from 'next/image';
-import { buscarCiudadesAction, consultarVehiculoAction, MunicipioDIVIPOLA } from '@/app/actions';
+import {
+    buscarCiudadesAction,
+    consultarVehiculoAction,
+    MunicipioDIVIPOLA,
+    obtenerMarcasAction,
+    obtenerReferenciasAction,
+    obtenerVersionesAction,
+} from '@/app/actions';
 import { iniciarCotizacion0KmAction } from '@/app/actions/cotizaciones';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { USOS_VEHICULO_PESADO } from '@/lib/constantes';
-import { DocumentType } from '@/lib/types/sunrise';
+import { DocumentType, SunriseVehicleFeatureItem } from '@/lib/types/sunrise';
 import {
     DatosTomadorFields,
-    DatosAseguradoFields,
     CiudadCirculacionInput,
-    CondicionesPolizaFields,
+    OfertaAwaitingAdvisorCard,
 } from './shared/formFields';
+import { HelpCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface Step1CotizaProps {
     onSuccess: (data: any) => void;
@@ -31,10 +37,30 @@ export default function Step1Cotiza({
     initialTipo = 'carro',
 }: Step1CotizaProps) {
     const [esCeroKm, setEsCeroKm] = useState(false);
+    const [modo0Km, setModo0Km] = useState<'catalogo' | 'factura'>('catalogo');
     const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>(initialTipo);
-    const [usoPesado, setUsoPesado] = useState<string>('carga_transporte_mercancia_propia');
+    const [submittedTicketId, setSubmittedTicketId] = useState<number | string | null>(null);
 
-    // Estados para flujo 0 km
+    // Estados para Catálogo 0 km
+    const anioActual = new Date().getFullYear();
+    const aniosDisponibles = [anioActual + 1, anioActual, anioActual - 1];
+    const [modelo0Km, setModelo0Km] = useState<string>(anioActual.toString());
+    const [marca0Km, setMarca0Km] = useState<string>('');
+    const [referencia0Km, setReferencia0Km] = useState<string>('');
+    const [version0Km, setVersion0Km] = useState<SunriseVehicleFeatureItem | null>(null);
+    const [precioComercial0Km, setPrecioComercial0Km] = useState<string>('');
+
+    const [listaMarcas, setListaMarcas] = useState<string[]>([]);
+    const [listaReferencias, setListaReferencias] = useState<string[]>([]);
+    const [listaVersiones, setListaVersiones] = useState<SunriseVehicleFeatureItem[]>([]);
+
+    const [cargandoMarcas, setCargandoMarcas] = useState(false);
+    const [cargandoReferencias, setCargandoReferencias] = useState(false);
+    const [cargandoVersiones, setCargandoVersiones] = useState(false);
+    const [errorCatalogo, setErrorCatalogo] = useState<string | null>(null);
+    const [, startTransitionCatalogo] = useTransition();
+
+    // Estados para flujo de Factura 0 km
     const [nombreCompleto, setNombreCompleto] = useState('');
     const [tipoDocumento, setTipoDocumento] = useState<DocumentType>('CC');
     const [numeroDocumento, setNumeroDocumento] = useState('');
@@ -42,11 +68,8 @@ export default function Step1Cotiza({
     const [email, setEmail] = useState('');
     const [genero, setGenero] = useState<'M' | 'F'>('M');
     const [fechaNacimiento, setFechaNacimiento] = useState('');
-    const [esMismoAsegurado, setEsMismoAsegurado] = useState(true);
-    const [aseguradoNombre, setAseguradoNombre] = useState('');
-    const [aseguradoEmail, setAseguradoEmail] = useState('');
 
-    // Búsqueda de ciudad DIVIPOLA (para 0 km)
+    // Búsqueda de ciudad DIVIPOLA (para 0 km factura)
     const [queryCiudad, setQueryCiudad] = useState('');
     const [ciudadSeleccionada, setCiudadSeleccionada] = useState<MunicipioDIVIPOLA | null>(null);
     const [listaCiudades, setListaCiudades] = useState<MunicipioDIVIPOLA[]>([]);
@@ -84,7 +107,8 @@ export default function Step1Cotiza({
     const [state0Km, formAction0Km, isPending0Km] = useActionState(
         async (prevState: any, formData: FormData) => {
             const res = await iniciarCotizacion0KmAction(prevState, formData);
-            if (res.success) {
+            if (res.success && res.ticketId) {
+                setSubmittedTicketId(res.ticketId);
                 if (onSuccess0Km) {
                     onSuccess0Km({
                         ticketId: res.ticketId,
@@ -100,23 +124,102 @@ export default function Step1Cotiza({
                             modelo: new Date().getFullYear(),
                         },
                     });
-                } else {
-                    onSuccess({
-                        ticketId: res.ticketId,
-                        status: res.status,
-                        quoted: res.quoted,
-                        personales: res.personales,
-                        vehiculo: {
-                            tipoVehiculo,
-                            esCeroKm: true,
-                        },
-                    });
                 }
             }
             return res;
         },
         null
     );
+
+    const handleToggle0Km = (checked: boolean) => {
+        setEsCeroKm(checked);
+        if (checked && listaMarcas.length === 0) {
+            setCargandoMarcas(true);
+            startTransitionCatalogo(async () => {
+                const res = await obtenerMarcasAction();
+                if (res.success && res.marcas) {
+                    setListaMarcas(res.marcas);
+                }
+                setCargandoMarcas(false);
+            });
+        }
+    };
+
+    const handleSelectModelo = (val: string | null) => {
+        const safeVal = val ?? '';
+        setModelo0Km(safeVal);
+        setReferencia0Km('');
+        setVersion0Km(null);
+        setListaVersiones([]);
+        setErrorCatalogo(null);
+        if (marca0Km && safeVal) {
+            setCargandoReferencias(true);
+            startTransitionCatalogo(async () => {
+                const res = await obtenerReferenciasAction(marca0Km, safeVal);
+                if (res.success && res.referencias) {
+                    setListaReferencias(res.referencias);
+                }
+                setCargandoReferencias(false);
+            });
+        }
+    };
+
+    const handleSelectMarca = (val: string | null) => {
+        const safeVal = val ?? '';
+        setMarca0Km(safeVal);
+        setReferencia0Km('');
+        setVersion0Km(null);
+        setListaReferencias([]);
+        setListaVersiones([]);
+        setErrorCatalogo(null);
+        if (safeVal) {
+            console.log("safeVal brand  ", safeVal);
+            console.log("modelo0Km   ", modelo0Km);
+            setCargandoReferencias(true);
+            startTransitionCatalogo(async () => {
+                const res = await obtenerReferenciasAction(safeVal, modelo0Km);
+                console.log("referencias   ", res);
+                if (res.success && res.referencias) {
+                    setListaReferencias(res.referencias);
+                }
+                setCargandoReferencias(false);
+            });
+        }
+    };
+
+    const handleSelectReferencia = (val: string | null) => {
+        const safeVal = val ?? '';
+        setReferencia0Km(safeVal);
+        setVersion0Km(null);
+        setListaVersiones([]);
+        setErrorCatalogo(null);
+        if (safeVal) {
+            setCargandoVersiones(true);
+            startTransitionCatalogo(async () => {
+                const res = await obtenerVersionesAction(marca0Km, modelo0Km, safeVal);
+                if (res.success && res.versiones) {
+                    setListaVersiones(res.versiones);
+                    if (res.versiones.length === 1) {
+                        setVersion0Km(res.versiones[0]);
+                        setPrecioComercial0Km(res.versiones[0].commercial_value?.toString() || '0');
+                    }
+                }
+                setCargandoVersiones(false);
+            });
+        }
+    };
+
+    const handleSelectVersion = (val: string | null) => {
+        const fasecoldaCode = val ?? '';
+        const selected = listaVersiones.find((v) => v.fasecolda_code === fasecoldaCode);
+        if (selected) {
+            setVersion0Km(selected);
+            setPrecioComercial0Km(selected.commercial_value?.toString() || '0');
+            setErrorCatalogo(null);
+        } else {
+            setVersion0Km(null);
+        }
+    };
 
     const handleSearchCiudad = (text: string) => {
         setQueryCiudad(text);
@@ -175,15 +278,67 @@ export default function Step1Cotiza({
         }
         setErrorHabeasData(false);
 
-        if (esCeroKm && errorFactura) {
-            e.preventDefault();
-            return;
+
+        // Cotizacion 0km sin factura, se avanza directo al paso 2
+        if (esCeroKm) {
+            if (modo0Km === 'catalogo') {
+                e.preventDefault();
+                if (!marca0Km || !referencia0Km || !version0Km) {
+                    setErrorCatalogo('Por favor selecciona la marca, línea y versión del vehículo para continuar.');
+                    return;
+                }
+                setErrorCatalogo(null);
+                onSuccess({
+                    placa: '',
+                    tipoVehiculo,
+                    useType: 'particular',
+                    esCeroKm: true,
+                    fasecoldaCode: version0Km.fasecolda_code,
+                    brand: version0Km.brand || marca0Km,
+                    line: version0Km.line || version0Km.reference || referencia0Km,
+                    modelo: modelo0Km,
+                    commercialPrice: Number(precioComercial0Km || version0Km.commercial_value || 0),
+                    referencePrice: Number(version0Km.commercial_value || 0),
+                    versionData: version0Km,
+                });
+                return;
+            }
+
+            if (modo0Km === 'factura' && errorFactura) {
+                e.preventDefault();
+                return;
+            }
         }
     };
 
-    const isPending = esCeroKm ? isPending0Km : isPendingPlaca;
-    const currentError = esCeroKm ? state0Km?.error : statePlaca?.error;
+    const handleReset0Km = () => {
+        setSubmittedTicketId(null);
+        setEsCeroKm(false);
+        setModo0Km('catalogo');
+        setErrorFactura(null);
+        setAceptaHabeasData(false);
+        setMarca0Km('');
+        setReferencia0Km('');
+        setVersion0Km(null);
+        setErrorCatalogo(null);
+    };
 
+    const isPending = esCeroKm ? (modo0Km === 'factura' ? isPending0Km : false) : isPendingPlaca;
+    const currentError = esCeroKm ? (modo0Km === 'factura' ? state0Km?.error : errorCatalogo) : statePlaca?.error;
+
+    // Si ya se radicó exitosamente la cotización 0 km, mostramos la tarjeta de espera de asesor
+    if (submittedTicketId) {
+        return (
+            <div className="w-full max-w-137.5 py-4">
+                <OfertaAwaitingAdvisorCard
+                    ticketId={submittedTicketId}
+                    onReset={handleReset0Km}
+                />
+            </div>
+        );
+    }
+
+    console.log("listado de versiones", listaVersiones)
     return (
         <div className='w-full max-w-137.5'>
             <h1 className='text-3xl font-bold text-gray-900 text-center mb-2'>Cotiza tu seguro todo riesgo</h1>
@@ -196,7 +351,7 @@ export default function Step1Cotiza({
             >
                 <input type="hidden" name="tipoVehiculo" value={tipoVehiculo} />
                 <input type="hidden" name="esCeroKm" value={esCeroKm.toString()} />
-                <input type="hidden" name="useType" value={tipoVehiculo === 'pesado' ? usoPesado : 'particular'} />
+                <input type="hidden" name="useType" value="particular" />
 
                 {/* Selector de Tipo de Vehículo */}
                 <div className="grid grid-cols-3 gap-3">
@@ -238,31 +393,12 @@ export default function Step1Cotiza({
                     />
                 </div>
 
-                {/* Selector de Uso de Vehículo (SOLO PARA PESADOS) */}
-                {tipoVehiculo === 'pesado' && (
-                    <div className="space-y-1.5 pt-1">
-                        <Label className="text-sm font-medium text-gray-700">Tipo de Uso (Carga / Utilitario)</Label>
-                        <Select value={usoPesado} onValueChange={(val) => setUsoPesado(val ?? 'carga_transporte_mercancia_propia')}>
-                            <SelectTrigger className="bg-white p-6 rounded-full w-full border-gray-200">
-                                <SelectValue placeholder="Selecciona el tipo de uso" />
-                            </SelectTrigger>
-                            <SelectContent side="bottom" sideOffset={6} alignItemWithTrigger={false}>
-                                {USOS_VEHICULO_PESADO.map((u) => (
-                                    <SelectItem key={u.value} value={u.value}>
-                                        {u.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
-
                 {/* Checkbox 0 km */}
                 <div className="flex items-center space-x-2">
                     <Checkbox
                         id="ceroKm"
                         checked={esCeroKm}
-                        onCheckedChange={(checked) => setEsCeroKm(Boolean(checked))}
+                        onCheckedChange={(checked) => handleToggle0Km(Boolean(checked))}
                         className="rounded-full bg-white"
                     />
                     <Label htmlFor="ceroKm" className="cursor-pointer text-sm font-medium text-gray-700">
@@ -284,17 +420,142 @@ export default function Step1Cotiza({
                             className="uppercase bg-white p-6 rounded-full font-bold tracking-wider"
                         />
                     </div>
-                ) : (
-                    /* NUEVO FLUJO 0 KM: DATOS PERSONALES + CARGA DE FACTURA DIRECTA */
-                    <div className="space-y-6 pt-2">
-                        <div className="text-center pb-2">
+                ) : modo0Km === 'catalogo' ? (
+                    /* NUEVO FLUJO 0 KM: CATÁLOGO SECUENCIAL FASECOLDA */
+                    <div className="space-y-5 pt-2">
+                        <div className="text-center pb-1">
                             <h2 className="text-xl font-bold text-gray-900">
+                                Selecciona tu vehículo 0 km
+                            </h2>
+                            <p className="text-xs text-gray-500">
+                                Elige la marca, línea y versión para cotizar automáticamente con Fasecolda.
+                            </p>
+                        </div>
+
+                        {/* 1. Año / Modelo */}
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-medium text-gray-700">Año del Modelo</Label>
+                            <Select value={modelo0Km} onValueChange={handleSelectModelo}>
+                                <SelectTrigger className="bg-white p-6 rounded-full w-full border-gray-200">
+                                    <SelectValue placeholder="Selecciona el año modelo" />
+                                </SelectTrigger>
+                                <SelectContent side="bottom" sideOffset={6}>
+                                    {aniosDisponibles.map((anio) => (
+                                        <SelectItem key={anio} value={anio.toString()}>
+                                            {anio}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* 2. Marca */}
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-medium text-gray-700">Marca</Label>
+                            <Select value={marca0Km} onValueChange={handleSelectMarca} disabled={cargandoMarcas}>
+                                <SelectTrigger className="bg-white p-6 rounded-full w-full border-gray-200">
+                                    <SelectValue placeholder={cargandoMarcas ? 'Cargando marcas...' : 'Selecciona la marca'} />
+                                </SelectTrigger>
+                                <SelectContent side="bottom" sideOffset={6} className="max-h-60">
+                                    {listaMarcas.map((m) => (
+                                        <SelectItem key={m} value={m}>
+                                            {m}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* 3. Línea / Referencia */}
+                        {marca0Km && (
+                            <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                                <Label className="text-sm font-medium text-gray-700">Línea o Referencia</Label>
+                                <Select value={referencia0Km} onValueChange={handleSelectReferencia} disabled={cargandoReferencias}>
+                                    <SelectTrigger className="bg-white p-6 rounded-full w-full border-gray-200">
+                                        <SelectValue placeholder={cargandoReferencias ? 'Cargando líneas...' : (listaReferencias.length === 0 ? 'No hay líneas disponibles' : 'Selecciona la línea')} />
+                                    </SelectTrigger>
+                                    <SelectContent side="bottom" sideOffset={6} className="max-h-60">
+                                        {listaReferencias.map((ref) => (
+                                            <SelectItem key={ref} value={ref}>
+                                                {ref}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {/* 4. Versión / Características */}
+                        {referencia0Km && (
+                            <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                                <Label className="text-sm font-medium text-gray-700">Versión / Características</Label>
+                                <Select
+                                    value={version0Km?.fasecolda_code || ''}
+                                    onValueChange={handleSelectVersion}
+                                    disabled={cargandoVersiones}
+                                >
+                                    <SelectTrigger className="bg-white p-6 rounded-full w-full border-gray-200">
+                                        <SelectValue placeholder={cargandoVersiones ? 'Cargando versiones...' : (listaVersiones.length === 0 ? 'No hay versiones disponibles' : 'Selecciona la versión')} />
+                                    </SelectTrigger>
+                                    <SelectContent side="bottom" sideOffset={6} className="max-h-60">
+                                        {listaVersiones.map((v) => (
+                                            <SelectItem key={v.fasecolda_code} value={v.fasecolda_code}>
+                                                {v.line} {v.commercial_value ? `($${new Intl.NumberFormat('es-CO').format(v.commercial_value)})` : ''}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {/* 5. Valor Comercial (Confirmación) */}
+                        {version0Km && (
+                            <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-200 space-y-1 animate-in fade-in duration-150">
+                                <span className="text-xs text-yellow-800 font-semibold uppercase tracking-wider block">
+                                    Valor Comercial de Referencia
+                                </span>
+                                <span className="text-xl font-bold text-gray-900 tabular-nums">
+                                    ${new Intl.NumberFormat('es-CO').format(Number(precioComercial0Km || version0Km.commercial_value || 0))}
+                                </span>
+                                <p className="text-xs text-yellow-700">
+                                    Código Fasecolda: {version0Km.fasecolda_code}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Enlace alternativo: No encuentras tu vehículo */}
+                        <div className="pt-2 text-center">
+                            <button
+                                type="button"
+                                onClick={() => setModo0Km('factura')}
+                                className="text-xs font-semibold text-gray-700 underline hover:text-black transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                                <HelpCircle size={14} className="text-gray-500" />
+                                ¿No encuentras tu vehículo? Haz clic aquí para adjuntar tu factura
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    /* MODO ALTERNATIVO 0 KM: FORMULARIO DE FACTURA Y DATOS PERSONALES */
+                    <div className="space-y-6 pt-2 animate-in fade-in duration-150">
+                        <div>
+                            <button
+                                type="button"
+                                onClick={() => setModo0Km('catalogo')}
+                                className="mb-4 text-xs font-semibold text-yellow-700 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1.5 rounded-full transition-colors cursor-pointer inline-flex items-center gap-1"
+                            >
+                                <ArrowLeft size={12} />
+                                Volver al catálogo
+                            </button>
+                            <h2 className="text-lg font-bold text-gray-900">
                                 Datos del Conductor y Factura
                             </h2>
                             <p className="text-xs text-gray-500">
-                                Radicaremos tu cotización 0 km directamente con un asesor de Segurautos.
+                                Radicaremos tu cotización 0 km para atención personalizada por un asesor.
                             </p>
                         </div>
+
+
 
                         {/* Adjunto de Factura */}
                         <div className={`space-y-3 p-5 bg-white rounded-2xl border transition-colors ${errorFactura ? 'border-red-400 ring-1 ring-red-400' : 'border-gray-200'}`}>
@@ -307,7 +568,7 @@ export default function Step1Cotiza({
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
                                 onChange={handleInvoiceChange}
-                                required={esCeroKm}
+                                required={esCeroKm && modo0Km === 'factura'}
                                 className="px-0 border-0 shadow-none file:mr-4 file:rounded-full file:border-0 file:bg-yellow-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-yellow-600 hover:file:bg-yellow-100 cursor-pointer"
                             />
                             <p className="text-xs text-gray-500">
@@ -336,16 +597,6 @@ export default function Step1Cotiza({
                             onChangeEmail={setEmail}
                         />
 
-                        {/* Datos del Asegurado */}
-                        <DatosAseguradoFields
-                            esMismoAsegurado={esMismoAsegurado}
-                            onChangeEsMismoAsegurado={setEsMismoAsegurado}
-                            aseguradoNombre={aseguradoNombre}
-                            onChangeAseguradoNombre={setAseguradoNombre}
-                            aseguradoEmail={aseguradoEmail}
-                            onChangeAseguradoEmail={setAseguradoEmail}
-                        />
-
                         {/* Ciudad de Circulación */}
                         <CiudadCirculacionInput
                             ciudadSeleccionada={ciudadSeleccionada}
@@ -368,12 +619,10 @@ export default function Step1Cotiza({
                                 type="date"
                                 value={fechaNacimiento}
                                 onChange={(e) => setFechaNacimiento(e.target.value)}
-                                required={esCeroKm}
+                                required={esCeroKm && modo0Km === 'factura'}
                                 className="uppercase bg-white p-6 rounded-full"
                             />
                         </div>
-
-
                     </div>
                 )}
 
@@ -411,8 +660,10 @@ export default function Step1Cotiza({
                     className="w-full hover:bg-yellow-500 text-black rounded-full p-6 cursor-pointer font-semibold text-base"
                 >
                     {isPending
-                        ? (esCeroKm ? 'Radicando cotización con factura…' : 'Consultando vehículo…')
-                        : (esCeroKm ? 'Radicar cotización con factura' : 'Ver ofertas disponibles')}
+                        ? (esCeroKm && modo0Km === 'factura' ? 'Radicando cotización con factura…' : 'Consultando…')
+                        : esCeroKm
+                            ? (modo0Km === 'catalogo' ? 'Continuar' : 'Radicar cotización con factura')
+                            : 'Ver ofertas disponibles'}
                 </Button>
             </form>
         </div>

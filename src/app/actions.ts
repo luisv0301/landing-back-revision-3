@@ -157,61 +157,71 @@ export async function buscarCiudadesAction(query: string) {
     }
 }
 
-// Helpers para compatibilidad en catálogo 0 km
-const MARCAS_DESTACADAS = [
-    'CHEVROLET',
-    'RENAULT',
-    'MAZDA',
-    'KIA',
-    'TOYOTA',
-    'NISSAN',
-    'HYUNDAI',
-    'VOLKSWAGEN',
-    'FORD',
-    'SUZUKI',
-    'BMW',
-    'MERCEDES BENZ',
-    'AUDI',
-    'HONDA',
-    'YAMAHA',
-    'BAJAJ',
-    'AKT',
-    'AUTECO',
-    'HINO',
-    'FOTON',
-    'JAC',
-    'ISUZU',
-    'KENWORTH',
-    'INTERNATIONAL',
-];
-
+// Server Actions para Catálogo 0 km (Sunrise CRM)
 export async function obtenerMarcasAction() {
-    return { success: true, marcas: MARCAS_DESTACADAS };
+    try {
+        const res = await sunriseClient.getVehicleBrands();
+        return {
+            success: true,
+            marcas: res.results || [],
+        };
+    } catch (error: any) {
+        console.error('Error en obtenerMarcasAction:', error);
+        return {
+            success: false,
+            error: error.message || 'No se pudieron cargar las marcas del catálogo.',
+            marcas: [],
+        };
+    }
 }
 
-export async function obtenerReferenciasAction(marca: string, modelo: number) {
-    return {
-        success: true,
-        referencias: [
-            `${marca} LÍNEA PRINCIPAL`,
-            `${marca} VERSIÓN ESPECIAL`,
-        ],
-    };
+export async function obtenerReferenciasAction(marca: string, modelo: number | string) {
+    if (!marca || !modelo) {
+        return { success: true, referencias: [] };
+    }
+
+    try {
+        const res = await sunriseClient.getVehicleReferences(marca, modelo);
+        return {
+            success: true,
+            referencias: res.results || [],
+        };
+    } catch (error: any) {
+        console.error('Error en obtenerReferenciasAction:', error);
+        return {
+            success: false,
+            error: error.message || 'No se pudieron cargar las referencias para la marca seleccionada.',
+            referencias: [],
+        };
+    }
 }
 
 export async function obtenerVersionesAction(
     marca: string,
-    modelo: number,
+    modelo: number | string,
     ref: string
 ) {
-    return {
-        success: true,
-        versiones: [
-            {
-                code: '00000000',
-                lineaCompleta: `${marca} ${ref} ${modelo}`,
-                precioReferencia: 0,
-            },
-        ],
-    };
+    if (!marca || !modelo || !ref) {
+        return { success: true, versiones: [] };
+    }
+
+    try {
+        const res = await sunriseClient.getVehicleByFeatures({
+            brand: marca,
+            model: modelo,
+            reference: ref,
+            is_0km: true,
+        });
+        return {
+            success: true,
+            versiones: res.results || [],
+        };
+    } catch (error: any) {
+        console.error('Error en obtenerVersionesAction:', error);
+        return {
+            success: false,
+            error: error.message || 'No se pudieron cargar las versiones del vehículo.',
+            versiones: [],
+        };
+    }
 }

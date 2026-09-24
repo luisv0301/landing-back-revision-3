@@ -1,4 +1,6 @@
 import {
+  SunriseBrandsResponse,
+  SunriseByFeaturesResponse,
   SunriseCitiesResponse,
   SunriseCreateQuoteRequest,
   SunriseCreateQuoteResponse,
@@ -6,6 +8,7 @@ import {
   SunriseLeadRequest,
   SunriseLeadResponse,
   SunriseQuotePollResponse,
+  SunriseReferencesResponse,
   SunriseSelectQuoteRequest,
   SunriseSelectQuoteResponse,
   SunriseVehicleLookupResponse,
@@ -16,7 +19,7 @@ const BASE_URL =
   "https://migration-api.segurosintercol.com/api/landing";
 
 function getAuthHeaders(): HeadersInit {
-  const token = process.env.LANDING_QUOTE_API_TOKEN;
+  const token = process.env.LANDING_QUOTE_API_TOKEN || "";
   if (!token) {
     console.warn(
       "[SunriseClient] Advertencia: LANDING_QUOTE_API_TOKEN no está definido en variables de entorno.",
@@ -24,8 +27,7 @@ function getAuthHeaders(): HeadersInit {
   }
 
   return {
-    //"X-Landing-Token": token || "",
-    Authorization: `Bearer ${token || ""}`,
+    Authorization: `Bearer ${token}`,
   };
 }
 
@@ -80,12 +82,43 @@ async function requestJson<T>(
 export const sunriseClient = {
 
   // Consulta datos de un vehículo por placa en Sunrise CRM / Fasecolda.
-
   async lookupVehicle(plate: string): Promise<SunriseVehicleLookupResponse> {
     const cleanPlate = plate.trim().toUpperCase();
     return requestJson<SunriseVehicleLookupResponse>("vehicles/lookup/", {
       method: "POST",
       body: JSON.stringify({ plate: cleanPlate }),
+    });
+  },
+
+  // Consulta listado de marcas para vehículos 0 km
+  async getVehicleBrands(): Promise<SunriseBrandsResponse> {
+    return requestJson<SunriseBrandsResponse>("vehicles/brands/", {
+      method: "GET",
+    });
+  },
+
+  // Consulta referencias para una marca y modelo (año)
+  async getVehicleReferences(
+    brand: string,
+    model: string | number,
+  ): Promise<SunriseReferencesResponse> {
+    const endpoint = `vehicles/references/?brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}`;
+    return requestJson<SunriseReferencesResponse>(endpoint, {
+      method: "GET",
+    });
+  },
+
+  // Consulta versiones / características de un vehículo 0 km para obtener código Fasecolda
+  async getVehicleByFeatures(params: {
+    brand: string;
+    model: string | number;
+    reference: string;
+    is_0km?: boolean;
+  }): Promise<SunriseByFeaturesResponse> {
+    const is0kmParam = params.is_0km !== false ? "true" : "false";
+    const endpoint = `vehicles/by-features/?brand=${encodeURIComponent(params.brand)}&model=${encodeURIComponent(params.model)}&reference=${encodeURIComponent(params.reference)}&is_0km=${is0kmParam}`;
+    return requestJson<SunriseByFeaturesResponse>(endpoint, {
+      method: "GET",
     });
   },
 

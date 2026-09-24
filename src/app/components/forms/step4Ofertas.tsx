@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { OfertaPoliza } from "@/lib/utils";
+import { SunriseQuoteItem } from "@/lib/types/sunrise";
 import { useComparativoOfertas } from "@/app/hooks/useComparativoOfertas";
 import {
   Star,
@@ -12,23 +12,15 @@ import {
   Check,
   FileDown,
   RefreshCw,
-  UserCheck,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { OfertaAwaitingAdvisorCard } from "./shared/formFields";
 
 interface Step4Props {
   vehiculoData: any;
   ticketId?: number | string;
   jsonComparativoUrl?: string;
   pdfUrl?: string;
-  onSelectOferta: (oferta: OfertaPoliza) => void;
+  onSelectOferta: (oferta: SunriseQuoteItem) => void;
 }
 
 type TipoFiltro = "todas" | "economica" | "cobertura";
@@ -69,20 +61,20 @@ export default function Step4Ofertas({
 
     if (filtroActivo === "economica") {
       const menorPrecio = ofertas.reduce(
-        (min, o) => (o.precioAnual < min ? o.precioAnual : min),
-        ofertas[0].precioAnual,
+        (min, o) => (o.premium < min ? o.premium : min),
+        ofertas[0].premium,
       );
-      return ofertas.filter((o) => o.precioAnual === menorPrecio);
+      return ofertas.filter((o) => o.premium === menorPrecio);
     }
 
     if (filtroActivo === "cobertura") {
-      const amplias = ofertas.filter(
+      const recomendadas = ofertas.filter(
         (o) =>
-          o.tipoCobertura.toLowerCase().includes("amplia") ||
-          o.tipoCobertura.toLowerCase().includes("premium") ||
-          o.tipoCobertura.toLowerCase().includes("recomendada"),
+          o.status?.toLowerCase().includes("recomendada") ||
+          o.status?.toLowerCase().includes("amplia") ||
+          o.status?.toLowerCase().includes("premium"),
       );
-      return amplias.length > 0 ? amplias : ofertas;
+      return recomendadas.length > 0 ? recomendadas : ofertas;
     }
 
     return ofertas;
@@ -182,7 +174,7 @@ function OfertasFiltros({
   totalOfertas: number;
   filtroActivo: TipoFiltro;
   onSelectFiltro: (filtro: TipoFiltro) => void;
-  }) {
+}) {
   return (
     <div className="relative bg-white p-1.5 rounded-full border border-gray-200 shadow-xs flex items-center justify-between w-full max-w-md mb-8">
       <button
@@ -288,40 +280,12 @@ function OfertasErrorBanner({
   );
 }
 
-function OfertaAwaitingAdvisorCard({ ticketId }: { ticketId?: number | string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="w-full bg-white rounded-3xl border border-gray-200 p-8 text-center space-y-6 shadow-xs"
-    >
-      <div className="mx-auto bg-yellow-100 w-16 h-16 flex items-center justify-center rounded-full">
-        <UserCheck size={32} className="text-yellow-700" />
-      </div>
-
-      <div className="space-y-2 max-w-md mx-auto">
-        <h3 className="text-xl font-bold text-gray-900">
-          Un asesor te contactará a la brevedad
-        </h3>
-        <p className="text-gray-600 text-sm">
-          Hemos recibido tu solicitud y un especialista de Segurautos revisará las opciones y te contactará con la mejor tarifa disponible.
-        </p>
-        {ticketId && (
-          <div className="inline-block mt-3 px-4 py-1.5 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
-            Radicado de Solicitud: #{ticketId}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
 function OfertaCard({
   item,
   onSelectOferta,
 }: {
-  item: OfertaPoliza;
-  onSelectOferta: (oferta: OfertaPoliza) => void;
+  item: SunriseQuoteItem;
+  onSelectOferta: (oferta: SunriseQuoteItem) => void;
 }) {
   return (
     <motion.div
@@ -334,18 +298,21 @@ function OfertaCard({
       <div className="flex justify-between items-center">
         <div className="space-y-2">
           <div className="flex items-center">
-            {item.logoUrl ? (
+            {item.logo_url ? (
               <img
-                src={item.logoUrl}
-                alt={item.aseguradora}
+                src={item.logo_url}
+                alt={item.insurer}
                 className="max-h-10 object-contain lg:w-24 lg:max-h-max"
               />
             ) : (
               <span className="text-2xl font-black text-gray-900">
-                {item.aseguradora}
+                {item.insurer}
               </span>
             )}
           </div>
+          {item.plan_name && (
+            <p className="text-sm text-gray-600 font-semibold">{item.plan_name}</p>
+          )}
           <div className="hidden items-center space-x-1.5 text-sm text-gray-700 font-medium">
             <div className="flex text-black">
               {[...Array(5)].map((_, i) => (
@@ -361,11 +328,13 @@ function OfertaCard({
             Prima Anual
           </span>
           <div className="text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">
-            {formatCOP(item.precioAnual)}
+            {formatCOP(item.premium)}
           </div>
-          <span className="inline-block bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
-            {item.tipoCobertura}
-          </span>
+          {item.status && (
+            <span className="inline-block bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
+              {item.status}
+            </span>
+          )}
         </div>
       </div>
 
@@ -376,45 +345,6 @@ function OfertaCard({
         >
           La Quiero
         </Button>
-
-        <Dialog>
-          <DialogTrigger
-            render={
-              <button
-                type="button"
-                className="w-full text-center text-xs font-semibold text-gray-900 underline hover:text-gray-600 transition-colors cursor-pointer"
-              >
-                Ver Coberturas y Exclusiones
-              </button>
-            }
-          />
-          <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-gray-900">
-                {item.aseguradora} - {item.planNombre}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-gray-500">
-                Detalle de coberturas, condiciones y deducibles incluidos en la póliza.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="flex-1 overflow-y-auto pr-2 divide-y divide-gray-100">
-              {item.coberturas.map((cobertura, i) => (
-                <div key={i} className="py-3 flex flex-col gap-1">
-                  <h4 className="text-sm font-semibold text-gray-800 leading-snug">
-                    {cobertura.titulo}
-                  </h4>
-                  <p className="text-xs text-gray-600">
-                    <span className="font-medium text-gray-700">
-                      Deducible / Cobertura:{" "}
-                    </span>
-                    {cobertura.descripcion}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </motion.div>
   );

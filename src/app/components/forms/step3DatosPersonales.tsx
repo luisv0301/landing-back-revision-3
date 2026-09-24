@@ -7,10 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buscarCiudadesAction, MunicipioDIVIPOLA } from "@/app/actions";
 import { iniciarCotizacionAction } from "@/app/actions/cotizaciones";
-import { DocumentType } from "@/lib/types/sunrise";
+import { DocumentType, PolicyExpiresCode } from "@/lib/types/sunrise";
 import {
   DatosTomadorFields,
-  DatosAseguradoFields,
   CiudadCirculacionInput,
   CondicionesPolizaFields,
 } from "./shared/formFields";
@@ -27,13 +26,9 @@ export interface DatosPersonales {
   fechaNacimiento: string;
   cityCode: string;
   cityName: string;
-  vencimientoPoliza?: string;
-  endosoBanco?: string;
-  esMismoAsegurado?: boolean;
-  aseguradoNombre?: string;
-  aseguradoApellidos?: string;
-  aseguradoCedula?: string;
-  aseguradoEmail?: string;
+  policyExpires: PolicyExpiresCode;
+  hasCurrentPolicy: boolean;
+  bankEndorsement: boolean;
 }
 
 interface Step3Props {
@@ -115,23 +110,12 @@ export default function Step3DatosPersonales({
     initialData?.fechaNacimiento || "",
   );
 
-  // Estados del Asegurado
-  const [esMismoAsegurado, setEsMismoAsegurado] = useState<boolean>(
-    initialData?.esMismoAsegurado !== undefined ? initialData.esMismoAsegurado : true,
-  );
-  const [aseguradoNombre, setAseguradoNombre] = useState(
-    initialData?.aseguradoNombre || "",
-  );
-  const [aseguradoEmail, setAseguradoEmail] = useState(
-    initialData?.aseguradoEmail || "",
-  );
-
   // Condiciones de la póliza
-  const [vencimientoPoliza, setVencimientoPoliza] = useState(
-    initialData?.vencimientoPoliza || "Ya mismo",
+  const [policyExpires, setPolicyExpires] = useState<PolicyExpiresCode>(
+    initialData?.policyExpires || "now",
   );
-  const [endosoBanco, setEndosoBanco] = useState(
-    initialData?.endosoBanco || "No tiene endoso",
+  const [bankEndorsement, setBankEndorsement] = useState<boolean>(
+    initialData?.bankEndorsement ?? false,
   );
 
   // Búsqueda y selección de ciudad
@@ -176,15 +160,6 @@ export default function Step3DatosPersonales({
     e.preventDefault();
     setErrorLocal("");
 
-    if (!esMismoAsegurado) {
-      if (!aseguradoNombre.trim() || !aseguradoEmail.trim()) {
-        setErrorLocal(
-          "Por favor completa los datos obligatorios de quien diligencia el formulario.",
-        );
-        return;
-      }
-    }
-
     const formElement = e.currentTarget;
     const inputCiudadEl = formElement.querySelector<HTMLInputElement>(
       "#search_query_circulacion",
@@ -215,6 +190,8 @@ export default function Step3DatosPersonales({
       const firstname = partesNombre[0] || "";
       const lastname = partesNombre.slice(1).join(" ") || partesNombre[0] || "";
 
+      const hasCurrentPolicy = policyExpires !== "none";
+
       const payloadPersonales: DatosPersonales = {
         nombreCompleto,
         firstname,
@@ -227,21 +204,17 @@ export default function Step3DatosPersonales({
         fechaNacimiento,
         cityCode: targetCiudad.city_code,
         cityName: targetCiudad.city_name,
-        vencimientoPoliza,
-        endosoBanco,
-        esMismoAsegurado,
-        ...(esMismoAsegurado
-          ? {}
-          : {
-            aseguradoNombre,
-            aseguradoEmail,
-          }),
+        policyExpires,
+        hasCurrentPolicy,
+        bankEndorsement,
       };
 
       const cotizadorPayload = {
         vehiculo: vehiculoData,
         personales: payloadPersonales,
       };
+
+      console.log("cotizadorPayload", cotizadorPayload);
 
       const res = await iniciarCotizacionAction(cotizadorPayload);
 
@@ -297,16 +270,6 @@ export default function Step3DatosPersonales({
           onChangeEmail={setEmail}
         />
 
-        {/* Sección: Datos del Asegurado */}
-        <DatosAseguradoFields
-          esMismoAsegurado={esMismoAsegurado}
-          onChangeEsMismoAsegurado={setEsMismoAsegurado}
-          aseguradoNombre={aseguradoNombre}
-          onChangeAseguradoNombre={setAseguradoNombre}
-          aseguradoEmail={aseguradoEmail}
-          onChangeAseguradoEmail={setAseguradoEmail}
-        />
-
         {/* Sección: Ciudad de Circulación */}
         <CiudadCirculacionInput
           ciudadSeleccionada={ciudadSeleccionada}
@@ -335,10 +298,10 @@ export default function Step3DatosPersonales({
 
         {/* Condiciones de la Póliza */}
         <CondicionesPolizaFields
-          vencimientoPoliza={vencimientoPoliza}
-          onChangeVencimiento={setVencimientoPoliza}
-          endosoBanco={endosoBanco}
-          onChangeEndoso={setEndosoBanco}
+          vencimientoPoliza={policyExpires}
+          onChangeVencimiento={setPolicyExpires}
+          endosoBanco={bankEndorsement}
+          onChangeEndoso={setBankEndorsement}
         />
 
         {errorLocal && (

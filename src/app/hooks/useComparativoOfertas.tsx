@@ -3,8 +3,7 @@ import { useEffect } from "react";
 import {
   consultarEstadoCotizacionAction,
 } from "@/app/actions/cotizaciones";
-import { formatearPolizas, OfertaPoliza } from "@/lib/utils";
-import { QuoteStatus } from "@/lib/types/sunrise";
+import { QuoteStatus, SunriseQuoteItem } from "@/lib/types/sunrise";
 
 function useMountEffect(effect: () => void | (() => void)) {
   /* eslint-disable react-hooks/exhaustive-deps, no-restricted-syntax */
@@ -15,7 +14,7 @@ export function useComparativoOfertas(
   ticketId?: number | string,
   jsonComparativoUrl?: string,
 ) {
-  const [ofertas, setOfertas] = useState<OfertaPoliza[]>([]);
+  const [ofertas, setOfertas] = useState<SunriseQuoteItem[]>([]);
   const [status, setStatus] = useState<QuoteStatus | null>(null);
   const [ticketState, setTicketState] = useState<string | null>(null);
   const [comparativePdfUrl, setComparativePdfUrl] = useState<string | null>(null);
@@ -58,9 +57,16 @@ export function useComparativoOfertas(
             setComparativePdfUrl(res.comparativePdfUrl);
           }
 
+          console.log("estados del polling", res.status)
+          console.log("cotizaciones que llegan", res.quotes)
+          console.log("Ticket state: ", res.ticketState)
+          console.log("mensaje", res.message)
+
           if (res.status === "ready" || (res.quotes && res.quotes.length > 0)) {
-            const formateadas = formatearPolizas(res.quotes);
-            setOfertas(formateadas);
+            const rawQuotes = (res.quotes || []).sort(
+              (a, b) => Number(a.premium || 0) - Number(b.premium || 0),
+            );
+            setOfertas(rawQuotes);
             setCargando(false);
             stopPolling();
             return;

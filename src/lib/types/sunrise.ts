@@ -72,6 +72,40 @@ export interface SunriseVehicleLookupResponse {
   code?: string;
 }
 
+// GET /api/landing/vehicles/brands/
+export interface SunriseBrandsResponse {
+  count: number;
+  results: string[];
+}
+
+// GET /api/landing/vehicles/references/?brand={brand}&model={model}
+export interface SunriseReferencesResponse {
+  count: number;
+  brand: string;
+  model: string | number;
+  results: string[];
+}
+
+// GET /api/landing/vehicles/by-features/?brand={brand}&model={model}&reference={reference}&is_0km=true
+export interface SunriseVehicleFeatureItem {
+  fasecolda_code: string;
+  brand: string;
+  line: string;
+  reference: string;
+  model: string | number;
+  commercial_value: number;
+  is_0km: boolean;
+}
+
+export interface SunriseByFeaturesResponse {
+  count: number;
+  brand: string;
+  model: string | number;
+  reference: string;
+  is_0km: boolean;
+  results: SunriseVehicleFeatureItem[];
+}
+
 // POST /api/landing/leads/
 export interface SunriseLeadRequest {
   vehicle_type?: VehicleType;
@@ -92,6 +126,8 @@ export interface SunriseLeadResponse {
   ticket_id?: number | null;
   can_quote?: boolean;
 }
+
+export type PolicyExpiresCode = "now" | "week" | "15_30" | "over_30" | "none";
 
 // POST /api/landing/quotes/
 export interface SunriseCreateQuoteRequest {
@@ -115,6 +151,9 @@ export interface SunriseCreateQuoteRequest {
   gender: GenderType;
   city: string;
   city_code?: string;
+  policy_expires?: PolicyExpiresCode;
+  has_current_policy?: boolean;
+  bank_endorsement?: boolean;
 }
 
 export interface SunriseCreateQuoteResponse {

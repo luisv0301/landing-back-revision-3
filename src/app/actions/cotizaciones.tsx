@@ -4,6 +4,7 @@ import { sunriseClient } from "@/lib/api/sunriseClient";
 import {
   DocumentType,
   GenderType,
+  PolicyExpiresCode,
   SunriseCreateQuoteRequest,
   SunriseSelectQuoteRequest,
   VehicleType,
@@ -35,8 +36,11 @@ export interface IniciarCotizacionParams {
     fechaNacimiento?: string;
     cityCode?: string;
     cityName?: string;
+    policyExpires?: PolicyExpiresCode;
+    hasCurrentPolicy?: boolean;
+    bankEndorsement?: boolean;
     vencimientoPoliza?: string;
-    endosoBanco?: string;
+    endosoBanco?: string | boolean;
     esMismoAsegurado?: boolean;
     aseguradoNombre?: string;
     aseguradoEmail?: string;
@@ -73,6 +77,24 @@ export async function iniciarCotizacionAction(datos: IniciarCotizacionParams) {
     // Normalizar teléfono
     const cleanPhone = (personales.telefono || "").replace(/\D/g, "");
 
+    // Normalizar vigencia y endoso
+    const policyExpires = (personales.policyExpires ||
+      (personales.vencimientoPoliza as PolicyExpiresCode) ||
+      "now") as PolicyExpiresCode;
+
+    const hasCurrentPolicy =
+      personales.hasCurrentPolicy !== undefined
+        ? personales.hasCurrentPolicy
+        : policyExpires !== "none";
+
+    const bankEndorsement =
+      personales.bankEndorsement !== undefined
+        ? Boolean(personales.bankEndorsement)
+        : typeof personales.endosoBanco === "boolean"
+          ? personales.endosoBanco
+          : personales.endosoBanco === "true" ||
+          personales.endosoBanco === "Sí, tiene endoso a favor de un banco";
+
     const payload: SunriseCreateQuoteRequest = {
       vehicle_type: vehiculo.tipoVehiculo || "carro",
       consent: true,
@@ -96,9 +118,16 @@ export async function iniciarCotizacionAction(datos: IniciarCotizacionParams) {
       gender: genderMapped,
       city: personales.cityName || "Bogotá",
       city_code: personales.cityCode || undefined,
+      policy_expires: policyExpires,
+      has_current_policy: hasCurrentPolicy,
+      bank_endorsement: bankEndorsement,
     };
 
+    console.log("---<Payload de cotizacion>---", payload)
+
     const res = await sunriseClient.createQuote(payload);
+
+    console.log("---<Respuesta al iniciar cotizacion>---", res)
 
     return {
       success: true,
@@ -231,6 +260,8 @@ export async function iniciarCotizacion0KmAction(
 
     const res = await sunriseClient.createQuote(sunriseFormData);
 
+    console.log("Cotizacion 0km: ", res)
+
     return {
       success: true,
       ticketId: res.ticket_id,
@@ -281,6 +312,8 @@ export async function consultarEstadoCotizacionAction(
 
     const res = await sunriseClient.pollQuote(ticketId);
 
+    console.log("respuesta despues de hacer el polling", res)
+
     return {
       success: true,
       ticketId: res.ticket_id,
@@ -314,6 +347,7 @@ export async function seleccionarPolizaAction(
     }
 
     const res = await sunriseClient.selectQuote(ticketId, selection);
+    console.log("respuesta despues de seleccionar poliza", res)
     return { success: true, data: res };
   } catch (error: any) {
     console.error(`Error al seleccionar póliza para ticket ${ticketId}:`, error);
