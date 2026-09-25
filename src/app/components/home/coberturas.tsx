@@ -2,6 +2,7 @@
 
 import { useState, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 import { DotLottieReact, type DotLottie } from "@lottiefiles/dotlottie-react";
 
@@ -107,6 +108,8 @@ const COVERAGE_DATA: Record<VehicleType, CoverageInfo> = {
     },
 };
 
+const COVERAGE_LIST = Object.values(COVERAGE_DATA);
+
 export default function Coberturas() {
     const [selectedType, setSelectedType] = useState<VehicleType>("carro");
     const tabListId = useId();
@@ -134,7 +137,7 @@ export default function Coberturas() {
                     </p>
 
                     {/* Vehicle Selector Tabs */}
-                    <div className="mt-8 flex justify-center">
+                    <div className="mt-8 hidden justify-center lg:flex">
                         <div
                             role="tablist"
                             aria-label="Selecciona el tipo de vehículo"
@@ -192,7 +195,7 @@ export default function Coberturas() {
                     id={`${tabListId}-panel-${selectedType}`}
                     role="tabpanel"
                     aria-labelledby={`${tabListId}-tab-${selectedType}`}
-                    className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_1px_4px_0_#00000040]"
+                    className="hidden overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_1px_4px_0_#00000040] lg:block"
                 >
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -276,16 +279,118 @@ export default function Coberturas() {
 
                                 {/* CTA Button */}
                                 <div className="mt-10">
-                                    <a
-                                        href="#cotizar"
+                                    <Link
+                                        href="/formulario"
                                         className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold  transition-all duration-200 hover:bg-[#e6bd00] focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
                                     >
                                         Cotizar tu Seguro
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
                         </motion.div>
                     </AnimatePresence>
+                </div>
+
+                {/*cards movil*/}
+
+                <div className="sm:hidden space-y-6">
+                    {
+                        COVERAGE_LIST?.map((currentCoverage: any, id: number) => {
+                            return (
+                                <motion.div
+                                    key={id}
+                                    initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
+                                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                    exit={{ opacity: 0, y: -8, filter: "blur(2px)" }}
+                                    transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+                                    className="grid grid-cols-1 lg:grid-cols-2 bg-white rounded-4xl shadow-md overflow-hidden"
+                                >
+                                    {/* Left Column: Visual Illustration & Banner */}
+
+
+                                    <div className="aspect-4/3 lg:aspect-none rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:max-w-full lg:w-auto overflow-hidden relative bg-[#FFF7CF]">
+                                        <DotLottieReact
+                                            src={currentCoverage.lottie}
+                                            autoplay={true}
+                                            loop={true}
+                                            speed={currentCoverage.id === "moto" ? 0.7 : 0.35}
+                                            className={`h-full w-full absolute ${currentCoverage.id === "moto" ? " top-[-10%] scale-125" : "scale-140 top-[-15%]"} `}
+                                            renderConfig={{ autoResize: true }}
+                                        />
+                                        <picture>
+                                            <source
+                                                media="(min-width: 64rem)"
+                                                srcSet={currentCoverage.image.desktopSrc}
+                                            />
+                                            <img
+                                                src={currentCoverage.image.mobileSrc}
+                                                alt={currentCoverage.image.alt}
+                                                loading="lazy"
+                                                decoding="async"
+                                                className="absolute top-0 left-0"
+                                            />
+                                        </picture>
+
+                                    </div>
+
+
+
+
+                                    {/* Right Column: Coverage Details & Benefits */}
+                                    <div className="flex flex-col justify-between p-5 sm:p-10 lg:p-12">
+                                        <div>
+                                            <h3 className="text-3xl lg:text-4xl font-bold text-neutral-900 tracking-tight text-center">
+                                                {currentCoverage.title}
+                                            </h3>
+
+                                            {/* Highlight Box (Total Loss) */}
+                                            <div className="mt-6 rounded-2xl bg-[#232325] p-5 sm:p-6 text-white shadow-inner">
+                                                <div className="flex items-baseline justify-between gap-4">
+                                                    <span className="text-base sm:text-lg font-bold">
+                                                        {currentCoverage.totalLossTitle}
+                                                    </span>
+                                                    <span className="text-2xl sm:text-3xl font-extrabold text-white">
+                                                        {currentCoverage.totalLossPercentage}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-2 text-xs sm:text-sm text-neutral-300 leading-relaxed">
+                                                    {currentCoverage.totalLossDescription}
+                                                </p>
+                                            </div>
+
+                                            {/* Benefits Checklist */}
+                                            <ul className="mt-8 space-y-4" role="list">
+                                                {currentCoverage.benefits.map((benefit: any) => (
+                                                    <li key={benefit.id} className="flex items-start gap-3.5">
+                                                        <span
+                                                            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <CheckIcon className="h-3 w-3 stroke-[3]" />
+                                                        </span>
+                                                        <span className="text-sm sm:text-base font-medium text-neutral-800 leading-snug">
+                                                            {benefit.text}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        {/* CTA Button */}
+                                        <div className="mt-10">
+                                            <Link
+                                                href="/formulario"
+                                                className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold  transition-all duration-200 hover:bg-[#e6bd00] focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
+                                            >
+                                                Cotizar tu Seguro
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )
+                        })
+                    }
+
                 </div>
             </div>
         </section>

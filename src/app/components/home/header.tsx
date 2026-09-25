@@ -44,9 +44,9 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
 
     return (
         <div className="relative w-full overflow-x-clip">
-            <header className="px-4 pb-12 pt-9 lg:flex lg:max-w-280 lg:mx-auto lg:items-center lg:gap-8 lg:py-24 lg:px-0" ref={containerRef}>
+            <header className="px-4 pb-12 pt-5 lg:flex lg:max-w-280 lg:mx-auto lg:items-center lg:gap-8 lg:py-24 lg:px-0" ref={containerRef}>
                 <div className="text-center lg:text-start lg:flex-[0.7] lg:space-y-7">
-                    <h1 className="text-4xl text-pretty font-bold tracking-tight opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={titleRef}>Protege tu carro con el mejor seguro todo riesgo del mercado</h1>
+                    <h1 className="text-3xl lg:text-4xl text-pretty font-bold tracking-tight opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={titleRef}>Protege tu carro con el mejor seguro todo riesgo del mercado</h1>
                     <p className="mt-4 text-center lg:text-start mx-auto lg:mx-0 max-w-[44ch] opacity-0 translate-y-6 blur-sm scale-[0.98] will-change-[transform,filter,opacity,scale]" ref={textRef}>Nuestro equipo analiza entre 13+ aseguradoras y construye una <b>solución</b> para garantizar <b>tu protección</b> y la de tu vehículo.</p>
                     <div className="hidden space-y-4 lg:block">
                         <div className="relative flex gap-2.5 p-1 bg-white rounded-3xl border border-neutral-200">
@@ -99,7 +99,7 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
                     </div>
                 </div>
                 <div className="space-y-4 lg:flex-1">
-                    <div className="my-7 lg:my-0 relative block h-full w-full lg:scale-[1.1] lg:translate-y-[-2.5%] lg:translate-x-[17%]">
+                    <div className="mt-7 mb:4 lg:my-0 relative block h-full w-full lg:scale-[1.1] lg:translate-y-[-2.5%] lg:translate-x-[17%]">
                         <DotLottieReact src="/lotties/header.lottie" loop
                             autoplay />
                     </div>
@@ -119,7 +119,7 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
                         </div>
                     </div>
 
-                    <div className="relative flex gap-1 p-1 bg-neutral-100 rounded-3xl border border-neutral-200 lg:hidden">
+                    <div className="mb-2 relative flex gap-1 p-1 bg-white rounded-3xl border border-neutral-200 lg:hidden">
                         <button
                             type="button"
                             onClick={() => setTipoSeleccionado("carro")}
@@ -165,7 +165,7 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
 
                     <p className="text-[12px] text-pretty text-neutral-500 text-center lg:hidden mt-4" >La mejor cobertura, por el mejor precio</p>
                     <div className="lg:hidden">
-                        <div className="flex gap-4 justify-between items-center">
+                        <div className="flex gap-4 justify-evenly items-center text-xs">
                             <span className="font-bold text-neutral-400 flex items-center gap-1">  <svg width="175" height="35" viewBox="0 0 175 35" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto max-w-24">
                                 <path d="M8.49611 30.6251L10.8659 20.3803L2.91797 13.4896L13.418 12.5782L17.5013 2.91669L21.5847 12.5782L32.0847 13.4896L24.1368 20.3803L26.5066 30.6251L17.5013 25.1928L8.49611 30.6251Z" fill="black" />
                                 <path d="M43.4961 30.6251L45.8659 20.3803L37.918 13.4896L48.418 12.5782L52.5013 2.91669L56.5847 12.5782L67.0847 13.4896L59.1368 20.3803L61.5066 30.6251L52.5013 25.1928L43.4961 30.6251Z" fill="black" />
@@ -173,8 +173,8 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
                                 <path d="M113.496 30.6251L115.866 20.3803L107.918 13.4896L118.418 12.5782L122.501 2.91669L126.585 12.5782L137.085 13.4896L129.137 20.3803L131.507 30.6251L122.501 25.1928L113.496 30.6251Z" fill="black" />
                                 <path d="M148.496 30.6251L150.866 20.3803L142.918 13.4896L153.418 12.5782L157.501 2.91669L161.585 12.5782L172.085 13.4896L164.137 20.3803L166.507 30.6251L157.501 25.1928L148.496 30.6251Z" fill="#A2A2A2" />
                                 <path d="M150.866 20.3803L148.496 30.6251L157.501 25.1928L157.748 3.49999L161.585 12.5782L157.501 2.91669L153.418 12.5782L142.918 13.4896L150.866 20.3803Z" fill="black" />
-                            </svg> {userRatingTotal} reviews</span>
-                            <span className="font-bold ">{rating} en Google</span>
+                            </svg> {rating} en Google</span>
+                            <span className="font-bold ">{userRatingTotal} reviews</span>
                         </div>
                     </div>
                 </div>

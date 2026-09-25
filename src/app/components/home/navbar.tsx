@@ -36,10 +36,10 @@ export default function Navbar() {
 
     return (
         <header className="sticky top-0 z-50 w-full py-4 px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 lg:max-w-280 lg:mx-auto">
+            <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 lg:max-w-280 lg:mx-auto rounded-3xl bg-white shadow-sm border border-neutral-200/70">
 
                 {/* Brand / Logo */}
-                <a href="/" className="flex h-15.5 items-center py-2 rounded-full bg-white px-3 lg:py-2 lg:px-5 shadow-sm border border-neutral-200/70 lg:max-h-13.5" aria-label="Segurautos inicio">
+                <a href="/" className="flex h-15.5 items-center py-2 rounded-full bg-white px-3 lg:py-2 lg:px-5 lg:max-h-13.5" aria-label="Segurautos inicio">
                     <picture>
                         <img
                             src="/images/logo-transparent.png"
@@ -52,7 +52,7 @@ export default function Navbar() {
                 </a>
 
                 {/* Desktop Navigation Capsule */}
-                <div className="hidden lg:flex items-center rounded-full bg-white pl-8 pr-2 py-1.5 shadow-sm border border-neutral-200/70">
+                <div className="hidden lg:flex items-center rounded-full bg-white pl-8 pr-2 py-1.5 ">
                     <nav aria-label="Navegación principal">
                         <ul className="flex items-center gap-7 mr-6 text-sm font-semibold text-neutral-600">
                             {NAV_LINKS.map((link) => (
@@ -79,7 +79,7 @@ export default function Navbar() {
                 </div>
 
                 {/* Mobile Right Controls */}
-                <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-full shadow-sm border border-neutral-200/70 lg:hidden">
+                <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-full lg:hidden">
                     {/* Mobile Quick Call Button */}
                     <a
                         href={PHONE_CONTACT.href}
