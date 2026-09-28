@@ -10,7 +10,7 @@ export interface NavItem {
 }
 
 export const NAV_LINKS: readonly NavItem[] = [
-    { label: "Solicitar Asistencia", href: "/asistencia" },
+    { label: "Solicitar Asistencia", href: "/solicitar-asistencia" },
     { label: "Nuestros Clientes", href: "/#testimonios" },
     { label: "Políticas", href: "/politicas" },
 ] as const;

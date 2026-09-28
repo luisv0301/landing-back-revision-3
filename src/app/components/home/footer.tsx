@@ -10,7 +10,7 @@ export interface SocialLink {
 }
 
 export const FOOTER_NAV_LINKS: readonly FooterLink[] = [
-    { label: "Solicitar Asistencia", href: "/asistencia" },
+    { label: "Solicitar Asistencia", href: "/solicitar-asistencia" },
     { label: "Nuestros Clientes", href: "/#testimonios" },
     { label: "Políticas", href: "/politicas" },
     { label: "Contáctanos", href: "/contacto" },
