@@ -6,12 +6,22 @@ import { Button } from "@/components/ui/button";
 import { SunriseQuoteItem } from "@/lib/types/sunrise";
 import { useComparativoOfertas } from "@/app/hooks/useComparativoOfertas";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Star,
   Loader2,
   AlertCircle,
   Check,
   FileDown,
   RefreshCw,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
 import { OfertaAwaitingAdvisorCard } from "./shared/formFields";
 
@@ -280,6 +290,64 @@ function OfertasErrorBanner({
   );
 }
 
+function OfertaDetalleModal({ item }: { item: SunriseQuoteItem }) {
+  if (!item.detail_url) return null;
+
+  return (
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-full py-5 text-sm transition-colors shadow-none cursor-pointer flex items-center justify-center gap-2"
+          >
+            <FileText size={16} className="text-gray-500" />
+            <span>Ver detalle de la póliza</span>
+          </Button>
+        }
+      />
+      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] max-h-[90vh] flex flex-col p-4 sm:p-6 bg-white">
+        <DialogHeader className="flex flex-col gap-2 sm:gap-3 border-b border-gray-100 pb-3">
+          <div>
+            <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <span>{item.insurer}</span>
+              {item.plan_name && (
+                <span className="text-sm font-normal text-gray-500">
+                  • {item.plan_name}
+                </span>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500">
+              Detalle de coberturas y asistencias de la cotización
+            </DialogDescription>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href={item.detail_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <ExternalLink size={13} />
+              <span>Abrir en otra pestaña</span>
+            </a>
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 w-full min-h-0 bg-gray-50 rounded-xl overflow-hidden border border-gray-200 relative mt-2">
+          <iframe
+            src={item.detail_url}
+            title={`Detalle de póliza ${item.insurer}`}
+            className="w-full h-full border-0"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function OfertaCard({
   item,
   onSelectOferta,
@@ -345,6 +413,8 @@ function OfertaCard({
         >
           La Quiero
         </Button>
+
+        {item.detail_url && <OfertaDetalleModal item={item} />}
       </div>
     </motion.div>
   );
