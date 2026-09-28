@@ -54,7 +54,7 @@ function ConfirmacionContent() {
           </h1>
 
           <p className="text-gray-600 max-w-xl mx-auto text-base md:text-lg">
-            Hemos registrado tu selección. Un asesor especializado de{" "}
+            Hemos registrado tu selección. Un gestor especializado de{" "}
             <strong className="text-gray-900 font-bold">Segurautos</strong> se pondrá en
             contacto contigo en breve para dar el siguiente paso.
           </p>
