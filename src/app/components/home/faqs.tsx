@@ -65,7 +65,7 @@ export default function FAQS() {
                         id="faq-title"
                         className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl"
                     >
-                        Preguntas Frecuentes
+                        Preguntas frecuentes
                     </h2>
                 </header>
 

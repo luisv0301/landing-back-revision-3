@@ -22,6 +22,7 @@ function ConfirmacionContent() {
   const plan = searchParams.get("plan");
   const premium = searchParams.get("premium");
   const ticketId = searchParams.get("ticketId");
+  const logo = searchParams.get("logo");
 
   const formattedPremium = premium
     ? new Intl.NumberFormat("es-CO", {
@@ -72,6 +73,13 @@ function ConfirmacionContent() {
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Detalle de la oferta seleccionada
                 </span>
+                {logo && (
+                  <img
+                    src={logo}
+                    alt=""
+                    className="w-20 h-auto"
+                  />
+                )}
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 mt-0.5">
                   {insurer || "Aseguradora Aliada"}
                 </h2>

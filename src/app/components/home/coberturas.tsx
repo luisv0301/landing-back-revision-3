@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useState, useId, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
@@ -36,7 +36,7 @@ const COVERAGE_DATA: Record<VehicleType, CoverageInfo> = {
         id: "carro",
         label: "Carro",
         icon: "car",
-        title: "Auto todo Riesgo",
+        title: "Auto todo riesgo",
         totalLossTitle: "Pérdida total",
         totalLossPercentage: "80-90%",
         totalLossDescription: "Indemnización sobre el valor comercial del vehículo.",
@@ -73,7 +73,7 @@ const COVERAGE_DATA: Record<VehicleType, CoverageInfo> = {
         id: "moto",
         label: "Moto",
         icon: "moto",
-        title: "Moto todo Riesgo",
+        title: "Moto todo riesgo",
         totalLossTitle: "Pérdida total",
         totalLossPercentage: "100%",
         totalLossDescription: "Indemnización completa sobre el valor comercial de la moto.",
@@ -110,6 +110,63 @@ const COVERAGE_DATA: Record<VehicleType, CoverageInfo> = {
 
 const COVERAGE_LIST = Object.values(COVERAGE_DATA);
 
+interface CoverageMediaProps {
+    coverage: CoverageInfo;
+}
+
+function CoverageMedia({ coverage }: CoverageMediaProps) {
+    const dotLottieRef = useRef<DotLottie | null>(null);
+    const isInViewRef = useRef(false);
+
+    const handleViewportEnter = useCallback(() => {
+        isInViewRef.current = true;
+        dotLottieRef.current?.play();
+    }, []);
+
+    const handleLottieRef = useCallback((instance: DotLottie | null) => {
+        dotLottieRef.current = instance;
+        if (isInViewRef.current && instance) {
+            instance.play();
+        }
+    }, []);
+
+    const isMoto = coverage.id === "moto";
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-20px" }}
+            onViewportEnter={handleViewportEnter}
+            aria-hidden="true"
+            className="aspect-4/3 lg:aspect-none rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:max-w-full lg:w-auto overflow-hidden relative bg-[#FFF7CF]"
+        >
+            <DotLottieReact
+                src={coverage.lottie}
+                autoplay={false}
+                loop={false}
+                speed={isMoto ? 0.7 : 0.35}
+                dotLottieRefCallback={handleLottieRef}
+                className={`h-full w-full absolute ${isMoto ? "top-[-10%] scale-125" : "scale-140 top-[-15%]"}`}
+                renderConfig={{ autoResize: true }}
+            />
+            <picture>
+                <source
+                    media="(min-width: 64rem)"
+                    srcSet={coverage.image.desktopSrc}
+                />
+                <img
+                    src={coverage.image.mobileSrc}
+                    alt={coverage.image.alt}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute top-0 left-0"
+                />
+            </picture>
+        </motion.div>
+    );
+}
+
 export default function Coberturas() {
     const [selectedType, setSelectedType] = useState<VehicleType>("carro");
     const tabListId = useId();
@@ -129,7 +186,7 @@ export default function Coberturas() {
                         id="coverage-heading"
                         className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl"
                     >
-                        Cobertura Destacada
+                        Cobertura destacada
                     </h2>
                     <p className="mt-4 text-base sm:text-lg text-neutral-600 leading-relaxed">
                         Analizamos entre 13+ aseguradoras aliadas para encontrar el respaldo
@@ -207,40 +264,12 @@ export default function Coberturas() {
                             className="grid grid-cols-1 lg:grid-cols-2"
                         >
                             {/* Left Column: Visual Illustration & Banner */}
-
-
-                            <div className="aspect-4/3 lg:aspect-none rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:max-w-full lg:w-auto overflow-hidden relative bg-[#FFF7CF]">
-                                <DotLottieReact
-                                    src={currentCoverage.lottie}
-                                    autoplay={true}
-                                    loop={true}
-                                    speed={currentCoverage.id === "moto" ? 0.7 : 0.35}
-                                    className={`h-full w-full absolute ${currentCoverage.id === "moto" ? " top-[-10%] scale-125" : "scale-140 top-[-15%]"} `}
-                                    renderConfig={{ autoResize: true }}
-                                />
-                                <picture>
-                                    <source
-                                        media="(min-width: 64rem)"
-                                        srcSet={currentCoverage.image.desktopSrc}
-                                    />
-                                    <img
-                                        src={currentCoverage.image.mobileSrc}
-                                        alt={currentCoverage.image.alt}
-                                        loading="lazy"
-                                        decoding="async"
-                                        className="absolute top-0 left-0"
-                                    />
-                                </picture>
-
-                            </div>
-
-
-
+                            <CoverageMedia coverage={currentCoverage} />
 
                             {/* Right Column: Coverage Details & Benefits */}
                             <div className="flex flex-col justify-between p-5 sm:p-10 lg:p-12">
                                 <div>
-                                    <h3 className="text-3xl lg:text-4xl font-bold text-neutral-900 tracking-tight text-center">
+                                    <h3 className="text-2xl lg:text-4xl font-bold text-neutral-900 tracking-tight text-center">
                                         {currentCoverage.title}
                                     </h3>
 
@@ -281,7 +310,7 @@ export default function Coberturas() {
                                 <div className="mt-10">
                                     <Link
                                         href="/formulario"
-                                        className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold  transition-all duration-200 hover:bg-[#e6bd00] focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
+                                        className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold transition-all duration-200 hover:bg-[#e6bd00] focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
                                     >
                                         Cotizar tu Seguro
                                     </Link>
@@ -295,72 +324,44 @@ export default function Coberturas() {
 
                 <div className="sm:hidden space-y-6">
                     {
-                        COVERAGE_LIST?.map((currentCoverage: any, id: number) => {
+                        COVERAGE_LIST.map((coverage) => {
                             return (
                                 <motion.div
-                                    key={id}
+                                    key={coverage.id}
                                     initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
-                                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                                    exit={{ opacity: 0, y: -8, filter: "blur(2px)" }}
+                                    whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                    viewport={{ once: true, margin: "-20px" }}
                                     transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
                                     className="grid grid-cols-1 lg:grid-cols-2 bg-white rounded-4xl shadow-md overflow-hidden"
                                 >
                                     {/* Left Column: Visual Illustration & Banner */}
-
-
-                                    <div className="aspect-4/3 lg:aspect-none rounded-b-4xl lg:h-full lg:rounded-t-4xl w-full lg:max-w-full lg:w-auto overflow-hidden relative bg-[#FFF7CF]">
-                                        <DotLottieReact
-                                            src={currentCoverage.lottie}
-                                            autoplay={true}
-                                            loop={true}
-                                            speed={currentCoverage.id === "moto" ? 0.7 : 0.35}
-                                            className={`h-full w-full absolute ${currentCoverage.id === "moto" ? " top-[-10%] scale-125" : "scale-140 top-[-15%]"} `}
-                                            renderConfig={{ autoResize: true }}
-                                        />
-                                        <picture>
-                                            <source
-                                                media="(min-width: 64rem)"
-                                                srcSet={currentCoverage.image.desktopSrc}
-                                            />
-                                            <img
-                                                src={currentCoverage.image.mobileSrc}
-                                                alt={currentCoverage.image.alt}
-                                                loading="lazy"
-                                                decoding="async"
-                                                className="absolute top-0 left-0"
-                                            />
-                                        </picture>
-
-                                    </div>
-
-
-
+                                    <CoverageMedia coverage={coverage} />
 
                                     {/* Right Column: Coverage Details & Benefits */}
                                     <div className="flex flex-col justify-between p-5 sm:p-10 lg:p-12">
                                         <div>
-                                            <h3 className="text-3xl lg:text-4xl font-bold text-neutral-900 tracking-tight text-center">
-                                                {currentCoverage.title}
+                                            <h3 className="text-2xl lg:text-4xl font-bold text-neutral-900 tracking-tight text-center">
+                                                {coverage.title}
                                             </h3>
 
                                             {/* Highlight Box (Total Loss) */}
                                             <div className="mt-6 rounded-2xl bg-[#232325] p-5 sm:p-6 text-white shadow-inner">
                                                 <div className="flex items-baseline justify-between gap-4">
                                                     <span className="text-base sm:text-lg font-bold">
-                                                        {currentCoverage.totalLossTitle}
+                                                        {coverage.totalLossTitle}
                                                     </span>
                                                     <span className="text-2xl sm:text-3xl font-extrabold text-white">
-                                                        {currentCoverage.totalLossPercentage}
+                                                        {coverage.totalLossPercentage}
                                                     </span>
                                                 </div>
                                                 <p className="mt-2 text-xs sm:text-sm text-neutral-300 leading-relaxed">
-                                                    {currentCoverage.totalLossDescription}
+                                                    {coverage.totalLossDescription}
                                                 </p>
                                             </div>
 
                                             {/* Benefits Checklist */}
                                             <ul className="mt-8 space-y-4" role="list">
-                                                {currentCoverage.benefits.map((benefit: any) => (
+                                                {coverage.benefits.map((benefit) => (
                                                     <li key={benefit.id} className="flex items-start gap-3.5">
                                                         <span
                                                             className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white"
@@ -380,7 +381,7 @@ export default function Coberturas() {
                                         <div className="mt-10">
                                             <Link
                                                 href="/formulario"
-                                                className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold  transition-all duration-200 hover:bg-[#e6bd00] focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
+                                                className="inline-flex py-5 px-6 rounded-full bg-yellow-400 text-black w-full min-h-14 items-center justify-center text-center font-bold transition-all duration-200 hover:bg-[#e6bd00] focus:outline-none focus:ring-4 focus:ring-[#FFD000]/40 active:scale-[0.99]"
                                             >
                                                 Cotizar tu Seguro
                                             </Link>

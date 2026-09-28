@@ -99,8 +99,8 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
                     </div>
                 </div>
                 <div className="space-y-4 lg:flex-1">
-                    <div className="mt-7 mb:4 lg:my-0 relative block h-full w-full lg:scale-[1.1] lg:translate-y-[-2.5%] lg:translate-x-[17%]">
-                        <DotLottieReact src="/lotties/header.lottie" loop
+                    <div className="mt-7 mb:4 lg:my-0 relative block h-full w-full lg:scale-[1.3] lg:translate-y-[-2.5%] lg:translate-x-[19%]">
+                        <DotLottieReact src="/lotties/header-2.lottie" loop
                             autoplay />
                     </div>
 
@@ -180,10 +180,13 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
                 </div>
             </header>
 
-            <svg width="220" height="93" viewBox="0 0 220 93" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 translate-x-[-30%] hidden xl:block">
-                <path d="M7.32568 70.5C-1.68452 75.0217 -1.17461 92.5 5.35487 92.5H210.895C215.551 92.5 219.326 88.7257 219.326 84.0699V75.5238C219.326 63.023 209.192 52.889 196.691 52.889H193.247H188.965C176.927 52.889 167.169 62.6476 167.169 74.6855C167.169 66.099 170.176 50.704 156.661 41.6606C143.145 32.6172 125.889 37.8925 121.196 41.6606C119.319 23.7621 105.393 -2.09044 64.0596 0.709672C25.06 3.35166 19.4286 52.935 25.06 72.7175C23.1844 70.8335 16.3359 65.9782 7.32568 70.5Z" stroke="#262626" />
-                <path d="M110.326 64.4999C110.326 58.5284 113.128 47.1182 122.326 41" stroke="black" />
+
+
+            <svg width="132" height="71" viewBox="0 0 132 71" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 translate-x-[-26%] scale-115 hidden xl:block">
+                <path d="M-29.55 55.169C-36.4097 58.5919 -33.8373 66.5788 -31.6937 70.1444H124.791H131.209V62.3217C131.209 50.0814 121.286 40.1587 109.046 40.1587H108C98.8873 40.1587 91.5 47.546 91.5 56.6587C91.5 50.1587 93.7896 38.5046 83.5 31.6587C73.2104 24.8128 60.0728 28.8063 56.5 31.6587C55.0709 18.1095 44.4687 -1.46098 13 0.658719C-16.6916 2.65871 -20.9789 40.1935 -16.6916 55.169C-18.1195 53.7427 -22.6903 51.746 -29.55 55.169Z" stroke="#262626" />
+                <path d="M49 49.2468C49 42.7963 50.5468 29.8127 67.5 28.1587" stroke="black" />
             </svg>
+
 
 
             <svg width="189" height="210" viewBox="0 0 189 210" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute left-0 bottom-0 hidden xl:block scale-[0.85]">

@@ -139,6 +139,7 @@ export default function CotizadorForm({
     const planName = ofertaElegida.plan_name || ofertaElegida.planNombre || "";
     const premium = Number(ofertaElegida.premium || ofertaElegida.precioAnual || 0);
     const quoteId = Number(ofertaElegida.id) || undefined;
+    const logo = ofertaElegida.logo_url || ofertaElegida.logo || "";
 
     startTransition(async () => {
       if (datosCotizacion.ticketId) {
@@ -165,6 +166,7 @@ export default function CotizadorForm({
           if (planName) params.set("plan", planName);
           if (premium > 0) params.set("premium", String(premium));
           if (datosCotizacion.ticketId) params.set("ticketId", String(datosCotizacion.ticketId));
+          if (logo) params.set("logo", logo);
 
           router.push(`/confirmacion?${params.toString()}`);
         } else {

@@ -528,9 +528,9 @@ export default function Step1Cotiza({
                             <button
                                 type="button"
                                 onClick={() => setModo0Km('factura')}
-                                className="text-xs font-semibold text-gray-700 underline hover:text-black transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                                className="text-sm font-semibold text-gray-700 underline hover:text-black transition-colors cursor-pointer inline-flex items-center gap-1.5"
                             >
-                                <HelpCircle size={14} className="text-gray-500" />
+                                <HelpCircle size={16} className="text-gray-700" />
                                 ¿No encuentras tu vehículo? Haz clic aquí para adjuntar tu factura
                             </button>
                         </div>
@@ -542,10 +542,10 @@ export default function Step1Cotiza({
                             <button
                                 type="button"
                                 onClick={() => setModo0Km('catalogo')}
-                                className="mb-4 text-xs font-semibold text-yellow-700 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1.5 rounded-full transition-colors cursor-pointer inline-flex items-center gap-1"
+                                className="group mb-4 text-sm font-semibold text-yellow-700 hover:text-yellow-800 transition-colors cursor-pointer inline-flex items-center gap-1"
                             >
-                                <ArrowLeft size={12} />
-                                Volver al catálogo
+                                <ArrowLeft size={16} className='opacity-0 group-hover:opacity-100 transition-opacity' />
+                                <span className='-translate-x-3 group-hover:translate-x-2 transition-transform'>Volver al catálogo</span>
                             </button>
                             <h2 className="text-lg font-bold text-gray-900">
                                 Datos del Conductor y Factura
@@ -639,8 +639,8 @@ export default function Step1Cotiza({
                             }}
                             className="mt-0.5 rounded-md bg-white border-gray-300"
                         />
-                        <Label htmlFor="habeasData" className="inline-block text-xs text-gray-600 leading-tight cursor-pointer">
-                            Acepto la <a href="/politicas" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-black">política de tratamiento de datos personales</a> y los términos y condiciones. *
+                        <Label htmlFor="habeasData" className="inline-block text-sm text-gray-700 leading-tight cursor-pointer">
+                            Acepto la <a href="/politicas" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-black">política de tratamiento de datos personales</a> y los términos y condiciones. *
                         </Label>
                     </div>
                     {errorHabeasData && (

@@ -59,11 +59,12 @@ function BeneficiosMedia() {
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
             onViewportEnter={handleViewportEnter}
+            aria-hidden="true"
             className="rounded-t-4xl lg:max-w-[50%] lg:rounded-4xl w-full relative aspect-square overflow-clip bg-[#FFF7CF]"
         >
             <DotLottieReact
                 src="/lotties/respaldo-bg.lottie"
-                loop
+                loop={false}
                 autoplay={false}
                 dotLottieRefCallback={handleBgLottieRef}
                 className="absolute top-0 left-0 w-full h-full scale-110"
@@ -72,6 +73,7 @@ function BeneficiosMedia() {
             <img src="/images/respaldo-2.webp" alt="" className="absolute top-0 left-0 object-cover" />
             <DotLottieReact
                 src="/lotties/check.lottie"
+                loop={false}
                 autoplay={false}
                 dotLottieRefCallback={handleCheckLottieRef}
                 className="absolute bottom-1.5 right-0 max-w-[40%]"
@@ -83,7 +85,7 @@ function BeneficiosMedia() {
 export default function Beneficios() {
     return (
         <div className="px-6 py-12 lg:py-24 lg:max-w-280 lg:mx-auto">
-            <h2 className="text-4xl text-center font-bold lg:text-5xl tracking-tight">Doble Respaldo</h2>
+            <h2 className="text-3xl text-center font-bold lg:text-5xl tracking-tight">Doble respaldo</h2>
             <p className="text-center mt-3 text-neutral-600">No solo vendemos pólizas: te acompañamos en todo el proceso</p>
             <div className="lg:flex lg:gap-3 flex-row-reverse mt-12">
                 <BeneficiosMedia />
@@ -92,7 +94,7 @@ export default function Beneficios() {
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-200px" }}
-                    className="space-y-0.5 lg:space-y-3 bg-[#FFF7CF] py-7 rounded-b-4xl lg:py-0 lg:bg-transparent"
+                    className="space-y-0.5 lg:space-y-3 bg-[#FFF7CF] pt-0 pb-7 rounded-b-4xl lg:py-0 lg:bg-transparent"
                 >
                     <motion.li
                         variants={itemVariants}

@@ -123,7 +123,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-                        className="absolute top-full left-0 w-full border-b border-neutral-200/80 bg-[#FAF8F5]/95 backdrop-blur-md px-6 py-6 shadow-xl lg:hidden"
+                        className="absolute top-full left-0 w-full border-b border-neutral-200/80 bg-white backdrop-blur-md px-6 py-6 shadow-xl lg:hidden rounded-b-2xl"
                     >
                         <nav aria-label="Navegación móvil">
                             <motion.ul

@@ -91,7 +91,7 @@ function StepCard({ step }: StepCardProps) {
         >
             <div className="relative flex flex-col justify-between bg-[#FFF6D4] p-6 pb-4 rounded-b-4xl">
                 <span
-                    className="text-3xl font-extrabold text-neutral-900 tracking-tight"
+                    className="absolute top-6 left-6 text-3xl font-extrabold text-neutral-900 tracking-tight"
                     aria-hidden="true"
                 >
                     {step.id}
@@ -135,7 +135,7 @@ export default function ComoFunciona() {
                         id="how-it-works-title"
                         className="text-3xl font-bold tracking-tight text-white lg:text-5xl"
                     >
-                        Cómo Funciona
+                        Cómo funciona
                     </h2>
                     <p className="mt-3 text-sm text-neutral-300 sm:text-base">
                         De la cotización a tu póliza activa en 4 pasos

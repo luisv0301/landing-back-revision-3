@@ -246,7 +246,7 @@ export default function Step3DatosPersonales({
     >
       <div className="text-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          Datos del Conductor y Riesgo
+          Datos del conductor y riesgo
         </h1>
         <p className="text-gray-600 text-sm">
           Calcularemos tus opciones personalizadas con las mejores aseguradoras.

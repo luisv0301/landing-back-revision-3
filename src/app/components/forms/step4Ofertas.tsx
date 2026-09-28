@@ -95,7 +95,7 @@ export default function Step4Ofertas({
     >
       <div className="text-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          {isAwaitingAdvisor ? "Solicitud Radicada" : "Tus Ofertas Personalizadas"}
+          {isAwaitingAdvisor ? "Solicitud radicada" : "Tus ofertas personalizadas"}
         </h1>
         <p className="text-gray-600 text-sm">
           {cargando
@@ -137,7 +137,7 @@ export default function Step4Ofertas({
 
       {/* Listado de Tarjetas de Oferta */}
       {!isAwaitingAdvisor && (
-        <div className="w-full space-y-6">
+        <div className={`w-full space-y-6 ${ofertas.length > 2 ? "lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0" : ""} `}>
           <AnimatePresence mode="popLayout">
             {ofertasFiltradas.map((item) => (
               <OfertaCard
