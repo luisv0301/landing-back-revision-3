@@ -69,14 +69,16 @@ export const metadata: Metadata = {
 
 export default async function Home() {
 
-  //const reviewsData = await getGoogleReviews();
-  //console.log("Google Reviews: ", reviewsData);
+  const reviewsData = await getGoogleReviews();
+  console.log("Google Reviews: ", reviewsData);
 
+  /*
   const reviewsData = {
     reviews: TESTIMONIALS_DATA,
     rating: 5,
     user_ratings_total: 13112312
   }
+    */
 
   return (
     <div className="bg-[#FFFDEF]">

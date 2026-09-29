@@ -12,12 +12,15 @@ export default async function FormPage({
       ? (params.tipo as "carro" | "moto" | "pesado")
       : "carro";
 
-  //const reviewsData = await getGoogleReviews();
+  const reviewsData = await getGoogleReviews();
+  console.log("Google Reviews: ", reviewsData);
 
+  /*
   const reviewsData = {
     rating: 4.9,
     user_ratings_total: 3558
   }
+  */
 
   return (
     <div className="bg-[#F4F4F4]">

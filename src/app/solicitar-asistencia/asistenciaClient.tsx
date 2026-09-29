@@ -183,19 +183,6 @@ export const INSURERS_ASSISTANCE_DATA: readonly InsurerAssistance[] = [
         nationalPhone: "01 8000 123322",
         nationalRaw: "018000123322",
     },
-    {
-        id: "hdi-liberty",
-        name: "HDI (Antes Liberty Seguros)",
-        legalName: "HDI Seguros (anteriormente Liberty Seguros)",
-        shortName: "HDI / Liberty",
-        logo: "/images/aseguradoras/hdi.png",
-        shortCode: "#224",
-        bogotaPhone: "(601) 307 7050",
-        bogotaRaw: "+576013077050",
-        nationalPhone: "01 8000 113390",
-        nationalRaw: "018000113390",
-        badge: "Antes Liberty",
-    },
 ] as const;
 
 export default function AsistenciaClient() {
