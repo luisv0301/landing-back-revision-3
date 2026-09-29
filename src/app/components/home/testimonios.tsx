@@ -63,7 +63,7 @@ export default function TestimonialsSection({ reviews, rating, userRatingTotal }
                                 {rating}/5 en Google
                             </span>
                             <span className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-300">
-                                {userRatingTotal} reviews
+                                {new Intl.NumberFormat("es-CO").format(userRatingTotal)} reviews
                             </span>
                         </div>
                     </div>
@@ -199,7 +199,7 @@ interface TestimonialCardProps {
 
 export function TestimonialCard({ testimonial }: TestimonialCardProps) {
     return (
-        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm">
+        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm relative">
             <div>
                 {/* Author Header */}
                 <header className="flex items-center gap-3.5">
@@ -246,6 +246,7 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
                     <p>{testimonial.text}</p>
                 </blockquote>
             </div>
+            <a href="https://www.google.com/maps/place/INTERCOL+LTDA+%7C+Agencia+de+Seguros/@4.5869229,-74.1034454,2255m/data=!3m1!1e3!4m8!3m7!1s0x8e3f99c345d5e159:0x126b4eaa710d198c!8m2!3d4.5869176!4d-74.1008705!9m1!1b1!16s%2Fg%2F11h1tp0v6l?entry=ttu&g_ep=EgoyMDI2MDkyMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" className="absolute inset-0"></a>
         </article>
     );
 }

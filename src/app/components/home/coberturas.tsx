@@ -147,7 +147,7 @@ function CoverageMedia({ coverage }: CoverageMediaProps) {
                 loop={false}
                 speed={isMoto ? 0.7 : 0.35}
                 dotLottieRefCallback={handleLottieRef}
-                className={`h-full w-full absolute ${isMoto ? "top-[-10%] scale-125" : "scale-140 top-[-15%]"}`}
+                className={`h-full w-full absolute ${isMoto ? "top-[-10%] scale-125" : "sm:scale-140 top-[-15%]"}`}
                 renderConfig={{ autoResize: true }}
             />
             <picture>

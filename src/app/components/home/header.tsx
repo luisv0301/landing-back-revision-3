@@ -114,7 +114,7 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
                             <path d="M150.866 20.3803L148.496 30.6251L157.501 25.1928L157.748 3.49999L161.585 12.5782L157.501 2.91669L153.418 12.5782L142.918 13.4896L150.866 20.3803Z" fill="black" />
                         </svg>
                         <div className="flex gap-4 justify-between">
-                            <span className="font-bold text-lg text-neutral-400">{userRatingTotal} reviews</span>
+                            <span className="font-bold text-lg text-neutral-400">{new Intl.NumberFormat("es-CO").format(userRatingTotal)} reviews</span>
                             <span className="font-bold text-lg">{rating} en Google</span>
                         </div>
                     </div>
@@ -174,7 +174,7 @@ export default function HomeHeader({ rating, userRatingTotal }: { rating: number
                                 <path d="M148.496 30.6251L150.866 20.3803L142.918 13.4896L153.418 12.5782L157.501 2.91669L161.585 12.5782L172.085 13.4896L164.137 20.3803L166.507 30.6251L157.501 25.1928L148.496 30.6251Z" fill="#A2A2A2" />
                                 <path d="M150.866 20.3803L148.496 30.6251L157.501 25.1928L157.748 3.49999L161.585 12.5782L157.501 2.91669L153.418 12.5782L142.918 13.4896L150.866 20.3803Z" fill="black" />
                             </svg> {rating} en Google</span>
-                            <span className="font-bold ">{userRatingTotal} reviews</span>
+                            <span className="font-bold ">{new Intl.NumberFormat("es-CO").format(userRatingTotal)} reviews</span>
                         </div>
                     </div>
                 </div>
