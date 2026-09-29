@@ -18,6 +18,7 @@ export function useComparativoOfertas(
   const [status, setStatus] = useState<QuoteStatus | null>(null);
   const [ticketState, setTicketState] = useState<string | null>(null);
   const [comparativePdfUrl, setComparativePdfUrl] = useState<string | null>(null);
+  const [mensajeServidor, setMensajeServidor] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
   const [segundosRestantes, setSegundosRestantes] = useState(30);
@@ -56,6 +57,9 @@ export function useComparativoOfertas(
           if (res.comparativePdfUrl) {
             setComparativePdfUrl(res.comparativePdfUrl);
           }
+          if (res.message) {
+            setMensajeServidor(res.message);
+          }
 
           console.log("estados del polling", res.status)
           console.log("cotizaciones que llegan", res.quotes)
@@ -92,6 +96,7 @@ export function useComparativoOfertas(
     stopPolling();
     setCargando(true);
     setErrorConsulta(null);
+    setMensajeServidor(null);
     setSegundosRestantes(30);
     isPollingRef.current = true;
 
@@ -128,6 +133,7 @@ export function useComparativoOfertas(
     status,
     ticketState,
     comparativePdfUrl,
+    mensajeServidor,
     cargando,
     errorConsulta,
     segundosRestantes,

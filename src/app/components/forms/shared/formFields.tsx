@@ -340,31 +340,46 @@ export function CondicionesPolizaFields({
   );
 }
 
-// Subcomponente: Tarjeta de Notificación para Cotizaciones 0 km o Tickets que esperan Asesor
+// Subcomponente: Tarjeta de Notificación para Cotizaciones que esperan Asesor o con Estado Failed
 export function OfertaAwaitingAdvisorCard({
   ticketId,
+  message,
+  status,
   onReset,
 }: {
   ticketId?: number | string;
+  message?: string | null;
+  status?: string | null;
   onReset?: () => void;
 }) {
+  const isFailed = status === "failed";
+  const title = isFailed
+    ? "No fue posible liquidar ofertas en línea"
+    : "Un asesor te contactará a la brevedad";
+
+  const description =
+    message ||
+    (isFailed
+      ? "No pudimos conectar con las aseguradoras en este momento, pero tu solicitud ha quedado radicada y un especialista revisará tu caso para brindarte las mejores opciones."
+      : "Hemos recibido tu solicitud y un especialista de Segurautos revisará las opciones y te contactará con la mejor tarifa disponible.");
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="w-full bg-white rounded-3xl border border-gray-200 p-8 text-center space-y-6 shadow-xs max-w-xl mx-auto"
     >
-      <div className="mx-auto bg-yellow-100 w-16 h-16 flex items-center justify-center rounded-full">
-        <UserCheck size={32} className="text-yellow-700" />
+      <div
+        className={`mx-auto w-16 h-16 flex items-center justify-center rounded-full ${
+          isFailed ? "bg-amber-100 text-amber-700" : "bg-yellow-100 text-yellow-700"
+        }`}
+      >
+        <UserCheck size={32} />
       </div>
 
       <div className="space-y-2 max-w-md mx-auto">
-        <h3 className="text-xl font-bold text-gray-900">
-          Un asesor te contactará a la brevedad
-        </h3>
-        <p className="text-gray-600 text-sm">
-          Hemos recibido tu solicitud y un especialista de Segurautos revisará las opciones y te contactará con la mejor tarifa disponible.
-        </p>
+        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+        <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
         {ticketId && (
           <div className="inline-block mt-3 px-4 py-1.5 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
             Radicado de Solicitud: #{ticketId}
@@ -385,6 +400,69 @@ export function OfertaAwaitingAdvisorCard({
           </Button>
         </div>
       )}
+    </motion.div>
+  );
+}
+
+// Subcomponente: Tarjeta de Estado Vacío (Ready pero sin ofertas y sin PDF)
+export function OfertaEmptyStateCard({
+  ticketId,
+  message,
+  onReintentar,
+  onReset,
+}: {
+  ticketId?: number | string;
+  message?: string | null;
+  onReintentar?: () => void;
+  onReset?: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full bg-white rounded-3xl border border-gray-200 p-8 text-center space-y-6 shadow-xs max-w-xl mx-auto"
+    >
+      <div className="mx-auto bg-gray-100 w-16 h-16 flex items-center justify-center rounded-full text-gray-600">
+        <Search size={32} />
+      </div>
+
+      <div className="space-y-2 max-w-md mx-auto">
+        <h3 className="text-xl font-bold text-gray-900">
+          No encontramos ofertas inmediatas en línea
+        </h3>
+        <p className="text-gray-600 text-sm leading-relaxed">
+          {message ||
+            "Para las características de este vehículo o perfil, las aseguradoras no generaron cotizaciones automáticas directas. Sin embargo, tu solicitud está radicada y nuestro equipo puede cotizarlo de manera personalizada."}
+        </p>
+        {ticketId && (
+          <div className="inline-block mt-3 px-4 py-1.5 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
+            Radicado de Solicitud: #{ticketId}
+          </div>
+        )}
+      </div>
+
+      <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        {onReintentar && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onReintentar}
+            className="rounded-full px-6 py-2.5 text-sm font-semibold text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer w-full sm:w-auto"
+          >
+            <RotateCcw size={16} className="mr-2" />
+            Reintentar consulta
+          </Button>
+        )}
+        {onReset && (
+          <Button
+            type="button"
+            onClick={onReset}
+            className="rounded-full px-6 py-2.5 text-sm font-semibold bg-[#FFCC00] hover:bg-[#E6B800] text-black transition-colors cursor-pointer w-full sm:w-auto shadow-none"
+          >
+            Cotizar otro vehículo
+          </Button>
+        )}
+      </div>
     </motion.div>
   );
 }

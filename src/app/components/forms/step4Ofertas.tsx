@@ -23,7 +23,10 @@ import {
   FileText,
   ExternalLink,
 } from "lucide-react";
-import { OfertaAwaitingAdvisorCard } from "./shared/formFields";
+import {
+  OfertaAwaitingAdvisorCard,
+  OfertaEmptyStateCard,
+} from "./shared/formFields";
 
 interface Step4Props {
   vehiculoData: any;
@@ -56,6 +59,7 @@ export default function Step4Ofertas({
     ofertas,
     status,
     comparativePdfUrl,
+    mensajeServidor,
     cargando,
     errorConsulta,
     segundosRestantes,
@@ -95,6 +99,23 @@ export default function Step4Ofertas({
     "tu vehículo";
 
   const isAwaitingAdvisor = status === "awaiting_advisor" || status === "failed";
+  const hasNoQuotesDirectly = !cargando && !isAwaitingAdvisor && ofertas.length === 0;
+
+  const headerTitle = isAwaitingAdvisor
+    ? "Solicitud radicada"
+    : hasNoQuotesDirectly
+      ? (pdfFinal ? "Comparativo de cotizaciones" : "Estado de tu cotización")
+      : "Tus ofertas personalizadas";
+
+  const headerSubtitle = cargando
+    ? `Cotizando en simultáneo con las principales aseguradoras para tu ${nombreVehiculo}…`
+    : isAwaitingAdvisor
+      ? `Hemos recibido los datos de tu ${nombreVehiculo} con éxito.`
+      : ofertas.length > 0
+        ? `Hemos encontrado ${ofertas.length} opciones disponibles para tu ${nombreVehiculo}`
+        : pdfFinal
+          ? `Comparativo liquidado para tu ${nombreVehiculo}`
+          : `Información de cotización para tu ${nombreVehiculo}`;
 
   return (
     <motion.div
@@ -105,16 +126,10 @@ export default function Step4Ofertas({
     >
       <div className="text-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          {isAwaitingAdvisor ? "Solicitud radicada" : "Tus ofertas personalizadas"}
+          {headerTitle}
         </h1>
         <p className="text-gray-600 text-sm">
-          {cargando
-            ? `Cotizando en simultáneo con las principales aseguradoras para tu ${nombreVehiculo}…`
-            : isAwaitingAdvisor
-              ? `Hemos recibido los datos de tu ${nombreVehiculo} con éxito.`
-              : ofertas.length > 0
-                ? `Hemos encontrado ${ofertas.length} opciones disponibles para tu ${nombreVehiculo}`
-                : `Comparativo liquidado para tu ${nombreVehiculo}`}
+          {headerSubtitle}
         </p>
       </div>
 
@@ -142,11 +157,24 @@ export default function Step4Ofertas({
 
       {/* Caso: Asesor asignado (awaiting_advisor o failed) */}
       {!cargando && isAwaitingAdvisor && (
-        <OfertaAwaitingAdvisorCard ticketId={ticketId} />
+        <OfertaAwaitingAdvisorCard
+          ticketId={ticketId}
+          message={mensajeServidor}
+          status={status}
+        />
       )}
 
-      {/* Listado de Tarjetas de Oferta */}
-      {!isAwaitingAdvisor && (
+      {/* Caso: Sin ofertas individuales directas y sin PDF comparativo */}
+      {!cargando && !isAwaitingAdvisor && ofertas.length === 0 && !pdfFinal && (
+        <OfertaEmptyStateCard
+          ticketId={ticketId}
+          message={mensajeServidor}
+          onReintentar={reintentar}
+        />
+      )}
+
+      {/* Listado de Tarjetas de Oferta o Fallback de PDF */}
+      {!isAwaitingAdvisor && (ofertas.length > 0 || pdfFinal || cargando) && (
         <div className={`w-full space-y-6 ${ofertas.length > 2 ? "lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0" : ""} `}>
           <AnimatePresence mode="popLayout">
             {ofertasFiltradas.map((item) => (
