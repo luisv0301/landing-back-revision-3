@@ -67,7 +67,7 @@ export function useComparativoOfertas(
           console.log("mensaje", res.message)
 
           if (res.status === "ready" || (res.quotes && res.quotes.length > 0)) {
-            console.log("cotizaciones listas", res.quotes)
+            console.log("----cotizaciones listas----", res.quotes)
             const rawQuotes = (res.quotes || []).sort(
               (a, b) => Number(a.premium || 0) - Number(b.premium || 0),
             );

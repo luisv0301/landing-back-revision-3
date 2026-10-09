@@ -168,6 +168,14 @@ export interface SunriseCreateQuoteResponse {
   message?: string;
 }
 
+export interface SunriseCoverageItem {
+  title: string;
+  description: string;
+  description_tag?: string;
+  group?: string | null;
+  coverage_tag?: string;
+}
+
 // GET /api/landing/quotes/{ticket_id}/
 export interface SunriseQuoteItem {
   id: number;
@@ -177,11 +185,10 @@ export interface SunriseQuoteItem {
   status: string; // ej: "Recomendada"
   logo_url?: string;
   detail_url?: string;
-  coverages?: Array<{
-    title?: string;
-    description?: string;
-    description_tag?: string;
-  }>;
+  pdf_url?: string;
+  value_proposition?: string;
+  coverages?: SunriseCoverageItem[];
+  benefits?: SunriseCoverageItem[];
 }
 
 export interface SunriseQuotePollResponse {

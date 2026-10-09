@@ -22,6 +22,9 @@ import {
   RefreshCw,
   FileText,
   ExternalLink,
+  Info,
+  ShieldCheck,
+  Gift,
 } from "lucide-react";
 import {
   OfertaAwaitingAdvisorCard,
@@ -318,9 +321,66 @@ function OfertasErrorBanner({
   );
 }
 
-function OfertaDetalleModal({ item }: { item: SunriseQuoteItem }) {
-  if (!item.detail_url) return null;
+function DeducibleBadge({ texto }: { texto: string }) {
+  const t = (texto || "").trim().toLowerCase();
 
+  let estilo = "bg-gray-100 text-gray-800 border-gray-200";
+
+  if (t === "no cubre" || t === "no") {
+    estilo = "bg-red-50 text-red-700 border-red-200";
+  } else if (
+    t.includes("sin deducible") ||
+    t === "si" ||
+    t === "si cubre" ||
+    t === "ilimitada" ||
+    t === "ilimitado" ||
+    t.includes("sin límite") ||
+    t.includes("sin limite")
+  ) {
+    estilo = "bg-emerald-50 text-emerald-800 border-emerald-200";
+  } else if (
+    t.includes("smmlv") ||
+    t.includes("smdlv") ||
+    t.includes("deducible") ||
+    t.startsWith("$") ||
+    /^\d+/.test(t)
+  ) {
+    estilo = "bg-amber-50 text-amber-800 border-amber-200";
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center text-right px-2.5 py-1 rounded-full text-xs font-semibold border ${estilo} max-w-[55%] shrink-0 text-balance`}
+    >
+      {texto || "No especificado"}
+    </span>
+  );
+}
+
+function DetalleItemRow({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-xl bg-gray-50/80 border border-gray-100 hover:bg-gray-100/70 transition-colors">
+      <span className="text-xs sm:text-sm font-medium text-gray-800 flex-1 leading-snug">
+        {title}
+      </span>
+      <DeducibleBadge texto={description} />
+    </div>
+  );
+}
+
+function OfertaDetallesModal({
+  item,
+  onSelectOferta,
+}: {
+  item: SunriseQuoteItem;
+  onSelectOferta: (oferta: SunriseQuoteItem) => void;
+}) {
   return (
     <Dialog>
       <DialogTrigger
@@ -330,46 +390,137 @@ function OfertaDetalleModal({ item }: { item: SunriseQuoteItem }) {
             variant="outline"
             className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-full py-5 text-sm transition-colors shadow-none cursor-pointer flex items-center justify-center gap-2"
           >
-            <FileText size={16} className="text-gray-500" />
-            <span>Ver detalle de la póliza</span>
+            <Info size={16} className="text-gray-500" />
+            <span>Ver detalles</span>
           </Button>
         }
       />
-      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] max-h-[90vh] flex flex-col p-4 sm:p-6 bg-white">
-        <DialogHeader className="flex flex-col gap-2 sm:gap-3 border-b border-gray-100 pb-3">
-          <div>
-            <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <span>{item.insurer}</span>
-              {item.plan_name && (
-                <span className="text-sm font-normal text-gray-500">
-                  • {item.plan_name}
-                </span>
-              )}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
-              Detalle de coberturas y asistencias de la cotización
-            </DialogDescription>
-          </div>
+      <DialogContent className="max-w-2xl lg:max-w-3xl w-[95vw] max-h-[90vh] flex flex-col p-4 sm:p-6 bg-white rounded-3xl">
+        <DialogHeader className="border-b border-gray-100 pb-4 text-left">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                {item.logo_url ? (
+                  <img
+                    src={item.logo_url}
+                    alt={item.insurer}
+                    className="max-h-8 object-contain"
+                  />
+                ) : (
+                  <DialogTitle className="text-xl font-bold text-gray-900">
+                    {item.insurer}
+                  </DialogTitle>
+                )}
+                {item.plan_name && (
+                  <span className="text-sm font-medium text-gray-600">
+                    • {item.plan_name}
+                  </span>
+                )}
+              </div>
+              <DialogDescription className="text-xs text-gray-500">
+                Detalle de coberturas y beneficios de la póliza
+              </DialogDescription>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <a
-              href={item.detail_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-            >
-              <ExternalLink size={13} />
-              <span>Abrir en otra pestaña</span>
-            </a>
+            <div className="text-right shrink-0">
+              <span className="text-xs text-gray-500 font-medium block">
+                Prima Anual
+              </span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums">
+                {formatCOP(item.premium)}
+              </span>
+            </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 w-full min-h-0 bg-gray-50 rounded-xl overflow-hidden border border-gray-200 relative mt-2">
-          <iframe
-            src={item.detail_url}
-            title={`Detalle de póliza ${item.insurer}`}
-            className="w-full h-full border-0"
-          />
+        {/* Contenido scrollable de Coberturas y Beneficios */}
+        <div className="flex-1 overflow-y-auto space-y-6 pr-1 my-2 min-h-0 text-left">
+          {/* Sección Coberturas */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-1.5">
+              <ShieldCheck size={18} className="text-gray-700" />
+              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                Coberturas
+                {item.coverages && item.coverages.length > 0 && (
+                  <span className="text-xs text-gray-500 font-normal ml-2 lowercase">
+                    ({item.coverages.length})
+                  </span>
+                )}
+              </h4>
+            </div>
+
+            {item.coverages && item.coverages.length > 0 ? (
+              <div className="space-y-2">
+                {item.coverages.map((cov, idx) => (
+                  <DetalleItemRow
+                    key={`${cov.coverage_tag || cov.title}-${idx}`}
+                    title={cov.title}
+                    description={cov.description}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 italic py-2">
+                No hay coberturas específicas detalladas para este plan.
+              </p>
+            )}
+          </div>
+
+          {/* Sección Beneficios */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-1.5">
+              <Gift size={18} className="text-gray-700" />
+              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                Beneficios
+                {item.benefits && item.benefits.length > 0 && (
+                  <span className="text-xs text-gray-500 font-normal ml-2 lowercase">
+                    ({item.benefits.length})
+                  </span>
+                )}
+              </h4>
+            </div>
+
+            {item.benefits && item.benefits.length > 0 ? (
+              <div className="space-y-2">
+                {item.benefits.map((ben, idx) => (
+                  <DetalleItemRow
+                    key={`${ben.coverage_tag || ben.title}-${idx}`}
+                    title={ben.title}
+                    description={ben.description}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 italic py-2">
+                No hay beneficios específicos detallados para este plan.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer del Modal */}
+        <div className="pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+          {(item.pdf_url || item.detail_url) ? (
+            <a
+              href={item.pdf_url || item.detail_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-500 hover:text-gray-800 underline inline-flex items-center gap-1.5 py-1"
+            >
+              <ExternalLink size={13} />
+              <span>Ver documento PDF oficial</span>
+            </a>
+          ) : (
+            <div />
+          )}
+
+          <Button
+            type="button"
+            onClick={() => onSelectOferta(item)}
+            className="w-full sm:w-auto px-8 bg-[#FFCC00] hover:bg-[#E6B800] text-black font-semibold rounded-full py-5 text-sm transition-colors shadow-none cursor-pointer"
+          >
+            La Quiero
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -442,7 +593,7 @@ function OfertaCard({
           La Quiero
         </Button>
 
-        {item.detail_url && <OfertaDetalleModal item={item} />}
+        <OfertaDetallesModal item={item} onSelectOferta={onSelectOferta} />
       </div>
     </motion.div>
   );
