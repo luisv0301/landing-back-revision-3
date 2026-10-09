@@ -64,7 +64,7 @@ export default function TestimonialsSection({ reviews, rating, userRatingTotal }
                                 {rating}/5 en Google
                             </span>
                             <span className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-300">
-                                {new Intl.NumberFormat("es-CO").format(userRatingTotal)} reviews
+                                <AnimatedCounter value={userRatingTotal} /> reviews
                             </span>
                         </div>
                     </div>
@@ -110,6 +110,73 @@ function HalfBigStar() {
                 </svg>
             </div>
         </div>
+    );
+}
+
+function AnimatedCounter({ value }: { value: number }) {
+    const spanRef = useCallback((element: HTMLSpanElement | null) => {
+        if (!element) return;
+
+        const targetValue = Math.max(0, value || 0);
+        const formatter = new Intl.NumberFormat("es-CO");
+
+        // Respeto a accesibilidad (prefers-reduced-motion): sin animación
+        if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            element.textContent = formatter.format(targetValue);
+            return;
+        }
+
+        let animationFrameId: number;
+        let hasAnimated = false;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const [entry] = entries;
+                if (entry.isIntersecting && !hasAnimated) {
+                    hasAnimated = true;
+                    observer.disconnect();
+
+                    const duration = 1200; // 1.2s: conteo sutil, moderno y no invasivo
+                    const startTime = performance.now();
+
+                    // Curva de aceleración moderna ease-out: suave y rápida desaceleración
+                    const easeOutQuart = (t: number): number => 1 - Math.pow(1 - t, 4);
+
+                    const updateCounter = (currentTime: number) => {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const currentVal = Math.round(easeOutQuart(progress) * targetValue);
+
+                        element.textContent = formatter.format(currentVal);
+
+                        if (progress < 1) {
+                            animationFrameId = requestAnimationFrame(updateCounter);
+                        } else {
+                            element.textContent = formatter.format(targetValue);
+                        }
+                    };
+
+                    element.textContent = formatter.format(0);
+                    animationFrameId = requestAnimationFrame(updateCounter);
+                }
+            },
+            { threshold: 0.2 }
+        );
+
+        observer.observe(element);
+
+        return () => {
+            observer.disconnect();
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        };
+    }, [value]);
+
+    return (
+        <span ref={spanRef} className="tabular-nums">
+            {new Intl.NumberFormat("es-CO").format(value)}
+        </span>
     );
 }
 
