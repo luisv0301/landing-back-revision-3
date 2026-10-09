@@ -1,5 +1,6 @@
 "use client"
-import { motion, type Variants } from "framer-motion"
+import { useState, useCallback, useId } from "react";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { GoogleReview } from "@/lib/google-reviews";
 import {
     Carousel,
@@ -193,13 +194,104 @@ export function TestimonialList({ testimonials }: TestimonialListProps) {
 }
 
 
+interface TestimonialExpandableTextProps {
+    text: string;
+}
+
+export function TestimonialExpandableText({
+    text,
+}: TestimonialExpandableTextProps) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [canTruncate, setCanTruncate] = useState(false);
+    const [collapsedHeight, setCollapsedHeight] = useState<number | undefined>(undefined);
+    const shouldReduceMotion = useReducedMotion();
+    const contentId = useId();
+
+    // Callback ref para medir el DOM sin usar useEffect (cumpliendo no-use-effect)
+    const textRef = useCallback((node: HTMLParagraphElement | null) => {
+        if (!node) return;
+
+        const checkTruncation = () => {
+            if (node.scrollHeight > node.clientHeight) {
+                setCanTruncate(true);
+                setCollapsedHeight(node.clientHeight);
+            }
+        };
+
+        checkTruncation();
+
+        const observer = new ResizeObserver(() => {
+            checkTruncation();
+        });
+
+        observer.observe(node);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+        // Detiene propagación para no activar el enlace absoluto de Google Maps de la tarjeta
+        e.stopPropagation();
+        setIsAnimating(true);
+        setIsExpanded((prev) => !prev);
+    };
+
+    return (
+        <div className="mt-4 flex flex-col">
+            <blockquote className="text-sm leading-relaxed text-neutral-700 select-none">
+                <motion.div
+                    initial={false}
+                    animate={{
+                        height: isExpanded ? "auto" : collapsedHeight ?? "auto",
+                    }}
+                    transition={{
+                        duration: shouldReduceMotion || !isAnimating ? 0 : 0.25,
+                        ease: [0.23, 1, 0.32, 1], // Emil Kowalski standard UI ease-out
+                    }}
+                    onAnimationComplete={() => {
+                        setIsAnimating(false);
+                    }}
+                    className="overflow-hidden"
+                >
+                    <p
+                        id={contentId}
+                        ref={textRef}
+                        className={`whitespace-pre-line ${
+                            !isExpanded && !isAnimating ? "line-clamp-8" : ""
+                        }`}
+                    >
+                        {text}
+                    </p>
+                </motion.div>
+            </blockquote>
+
+            {canTruncate && (
+                <div className="mt-2.5 flex items-center">
+                    <button
+                        type="button"
+                        aria-expanded={isExpanded}
+                        aria-controls={contentId}
+                        onClick={handleToggle}
+                        className="relative z-10 inline-flex items-center text-xs font-semibold text-neutral-900 underline underline-offset-4 decoration-neutral-300 hover:decoration-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 rounded-sm touch-manipulation py-1"
+                    >
+                        {isExpanded ? "Leer menos" : "Leer más"}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
 interface TestimonialCardProps {
     testimonial: GoogleReview;
 }
 
 export function TestimonialCard({ testimonial }: TestimonialCardProps) {
     return (
-        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm relative">
+        <article className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 shadow-sm relative group">
             <div>
                 {/* Author Header */}
                 <header className="flex items-center gap-3.5">
@@ -215,8 +307,8 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
                             className="h-full w-full object-cover"
                         />
                     </picture>
-                    <div>
-                        <h3 className="text-base font-bold text-neutral-900 leading-tight">
+                    <div className="min-w-0">
+                        <h3 className="text-base font-bold text-neutral-900 leading-tight truncate">
                             {testimonial.author_name}
                         </h3>
                         <p className="text-sm font-medium text-neutral-400">
@@ -233,20 +325,25 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
                     {Array.from({ length: 5 }).map((_, index) => (
                         <StarIcon
                             key={index}
-                            className={`h-4 w-4 ${index < testimonial.rating
-                                ? "fill-neutral-900"
-                                : "fill-neutral-300"
-                                }`}
+                            className={`h-4 w-4 ${
+                                index < testimonial.rating
+                                    ? "fill-neutral-900"
+                                    : "fill-neutral-300"
+                            }`}
                         />
                     ))}
                 </div>
 
                 {/* Testimonial Body */}
-                <blockquote className="mt-4 text-sm leading-relaxed text-neutral-700 select-none">
-                    <p>{testimonial.text}</p>
-                </blockquote>
+                <TestimonialExpandableText text={testimonial.text} />
             </div>
-            <a href="https://www.google.com/maps/place/INTERCOL+LTDA+%7C+Agencia+de+Seguros/@4.5869229,-74.1034454,2255m/data=!3m1!1e3!4m8!3m7!1s0x8e3f99c345d5e159:0x126b4eaa710d198c!8m2!3d4.5869176!4d-74.1008705!9m1!1b1!16s%2Fg%2F11h1tp0v6l?entry=ttu&g_ep=EgoyMDI2MDkyMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" className="absolute inset-0"></a>
+            <a
+                href="https://www.google.com/maps/place/INTERCOL+LTDA+%7C+Agencia+de+Seguros/@4.5869229,-74.1034454,2255m/data=!3m1!1e3!4m8!3m7!1s0x8e3f99c345d5e159:0x126b4eaa710d198c!8m2!3d4.5869176!4d-74.1008705!9m1!1b1!16s%2Fg%2F11h1tp0v6l?entry=ttu&g_ep=EgoyMDI2MDkyMy4wIKXMDSoASAFQAw%3D%3D"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+                aria-label={`Ver reseña completa de ${testimonial.author_name} en Google Maps`}
+            />
         </article>
     );
 }
