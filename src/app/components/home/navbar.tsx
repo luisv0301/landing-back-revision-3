@@ -1,7 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useSyncExternalStore } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+
+function subscribeScroll(callback: () => void) {
+    window.addEventListener("scroll", callback, { passive: true });
+    window.addEventListener("resize", callback, { passive: true });
+    return () => {
+        window.removeEventListener("scroll", callback);
+        window.removeEventListener("resize", callback);
+    };
+}
+
+function getScrollThreshold120Snapshot(): boolean {
+    return window.scrollY >= window.innerHeight * 1.2;
+}
+
+function getScrollThreshold140Snapshot(): boolean {
+    return window.scrollY >= window.innerHeight * 1.4;
+}
+
+function getScrollThresholdServerSnapshot(): boolean {
+    return false;
+}
+
+function useScrollThreshold120vh() {
+    return useSyncExternalStore(
+        subscribeScroll,
+        getScrollThreshold120Snapshot,
+        getScrollThresholdServerSnapshot
+    );
+}
+
+function useScrollThreshold140vh() {
+    return useSyncExternalStore(
+        subscribeScroll,
+        getScrollThreshold140Snapshot,
+        getScrollThresholdServerSnapshot
+    );
+}
 
 
 export interface NavItem {
@@ -22,6 +60,13 @@ export const PHONE_CONTACT = {
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const isPast120vh = useScrollThreshold120vh();
+    const isPast140vh = useScrollThreshold140vh();
+    const shouldReduceMotion = useReducedMotion();
+
+    const layoutTransition = shouldReduceMotion
+        ? { duration: 0 }
+        : { duration: 0.25, ease: [0.23, 1, 0.32, 1] };
 
     useEffect(() => {
         if (isOpen) {
@@ -52,31 +97,72 @@ export default function Navbar() {
                 </a>
 
                 {/* Desktop Navigation Capsule */}
-                <div className="hidden lg:flex items-center rounded-full bg-white pl-8 pr-2 py-1.5 ">
-                    <nav aria-label="Navegación principal">
-                        <ul className="flex items-center gap-7 mr-6 text-sm font-semibold text-neutral-600">
+                <motion.div
+                    layout
+                    transition={layoutTransition}
+                    className="hidden lg:flex items-center rounded-full bg-white pl-8 pr-2 py-1.5"
+                >
+                    <motion.nav layout="position" transition={layoutTransition} aria-label="Navegación principal">
+                        <motion.ul
+                            layout="position"
+                            transition={layoutTransition}
+                            className="flex items-center gap-7 mr-6 text-sm font-semibold text-neutral-600 whitespace-nowrap"
+                        >
                             {NAV_LINKS.map((link) => (
-                                <li key={link.label}>
+                                <motion.li
+                                    key={link.label}
+                                    layout="position"
+                                    transition={layoutTransition}
+                                >
                                     <a
                                         href={link.href}
                                         className="transition-colors duration-200 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
                                     >
                                         {link.label}
                                     </a>
-                                </li>
+                                </motion.li>
                             ))}
-                        </ul>
-                    </nav>
+                        </motion.ul>
+                    </motion.nav>
 
-                    {/* Desktop Phone Pill CTA */}
-                    <a
-                        href={PHONE_CONTACT.href}
-                        className="flex items-center gap-2.5 rounded-full bg-neutral-100/80 px-5 py-2.5 text-sm font-bold text-neutral-900 transition-all duration-200 hover:bg-neutral-200 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
-                    >
-                        <PhoneIcon className="h-4 w-4 stroke-[2.5]" />
-                        <span>{PHONE_CONTACT.number}</span>
-                    </a>
-                </div>
+                    {/* Desktop Phone Pill CTA / Cotizar Link Swap */}
+                    <motion.div layout transition={layoutTransition} className="relative flex items-center overflow-x-clip">
+                        <AnimatePresence mode="popLayout" initial={false}>
+                            {isPast140vh ? (
+                                <motion.div
+                                    key="cotizar-cta"
+                                    initial={{ opacity: 0, scale: 0.94 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.94 }}
+                                    transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                                >
+                                    <Link
+                                        href="/formulario"
+                                        className="flex items-center justify-center whitespace-nowrap rounded-full bg-[#FFCC00] px-6 py-2.5 text-sm font-bold text-neutral-950 transition-all duration-200 hover:bg-[#e6b800] active:scale-[0.98] shadow-xs hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                                    >
+                                        Cotizar
+                                    </Link>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="phone-cta"
+                                    initial={{ opacity: 0, scale: 0.94 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.94 }}
+                                    transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                                >
+                                    <a
+                                        href={PHONE_CONTACT.href}
+                                        className="flex items-center gap-2.5 whitespace-nowrap rounded-full bg-neutral-100/80 px-5 py-2.5 text-sm font-bold text-neutral-900 transition-all duration-200 hover:bg-neutral-200 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                                    >
+                                        <PhoneIcon className="h-4 w-4 stroke-[2.5]" />
+                                        <span>{PHONE_CONTACT.number}</span>
+                                    </a>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                </motion.div>
 
                 {/* Mobile Right Controls */}
                 <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-full lg:hidden">
@@ -167,6 +253,30 @@ export default function Navbar() {
                                 <span>{PHONE_CONTACT.number}</span>
                             </a>
                         </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Mobile Floating CTA at 120vh */}
+            <AnimatePresence>
+                {isPast120vh && !isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.88, y: 12 }}
+                        transition={{
+                            duration: shouldReduceMotion ? 0 : 0.22,
+                            ease: [0.23, 1, 0.32, 1],
+                        }}
+                        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-5 z-40 lg:hidden"
+                    >
+                        <Link
+                            href="/formulario"
+                            className="flex items-center justify-center rounded-full bg-[#FFCC00] px-6 py-3 text-sm font-bold text-neutral-950 shadow-lg shadow-black/15 transition-transform hover:bg-[#e6b800] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900 touch-manipulation"
+                            aria-label="Ir a cotizar seguro"
+                        >
+                            Cotizar
+                        </Link>
                     </motion.div>
                 )}
             </AnimatePresence>
