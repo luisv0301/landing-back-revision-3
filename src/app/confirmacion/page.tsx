@@ -88,7 +88,7 @@ function ConfirmacionContent() {
 
               {ticketId && (
                 <div className="inline-flex flex-col sm:items-end">
-                  <span className="text-xs font-medium text-gray-500">Radicado CRM</span>
+                  <span className="text-xs font-medium text-gray-500">Número de solicitud</span>
                   <span className="w-fit text-sm font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-full mt-1 border border-gray-200">
                     #{ticketId}
                   </span>

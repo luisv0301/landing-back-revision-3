@@ -102,22 +102,20 @@ export function DatosTomadorFields({
           <Button
             type="button"
             onClick={() => onChangeGenero("M")}
-            className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input cursor-pointer ${
-              genero === "M"
-                ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
-                : "border-gray-200 bg-white"
-            }`}
+            className={`p-6 rounded-full text-gray-700 hover:bg-neutral-700 hover:text-white font-medium text-sm transition-all shadow-xs border border-input cursor-pointer ${genero === "M"
+              ? "border-neutral-900 bg-neutral-900 font-semibold text-white"
+              : "border-gray-200 bg-white"
+              }`}
           >
             Masculino
           </Button>
           <Button
             type="button"
             onClick={() => onChangeGenero("F")}
-            className={`p-6 rounded-full text-gray-700 font-medium text-sm transition-all shadow-xs border border-input cursor-pointer ${
-              genero === "F"
-                ? "border-yellow-400 bg-yellow-50 font-semibold text-black"
-                : "border-gray-200 bg-white"
-            }`}
+            className={`p-6 rounded-full text-gray-700 hover:bg-neutral-700 hover:text-white font-medium text-sm transition-all shadow-xs border border-input cursor-pointer ${genero === "F"
+              ? "border-neutral-900 bg-neutral-900 font-semibold text-white"
+              : "border-gray-200 bg-white"
+              }`}
           >
             Femenino
           </Button>
@@ -300,11 +298,10 @@ export function CondicionesPolizaFields({
               key={op.code}
               type="button"
               onClick={() => onChangeVencimiento(op.code)}
-              className={`w-full text-left p-6 rounded-full border text-sm font-medium transition-all shadow-xs border-input cursor-pointer ${
-                vencimientoPoliza === op.code
-                  ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
-                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-              }`}
+              className={`w-full text-left p-6 rounded-full border text-sm font-medium transition-all shadow-xs border-input cursor-pointer ${vencimientoPoliza === op.code
+                ? "border-neutral-900 bg-neutral-900 text-white font-semibold hover:bg-neutral-700"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-neutral-700 hover:text-white"
+                }`}
             >
               {op.label}
             </Button>
@@ -325,11 +322,10 @@ export function CondicionesPolizaFields({
               key={op.label}
               type="button"
               onClick={() => onChangeEndoso(op.value)}
-              className={`w-full text-left p-6 rounded-full text-sm font-medium transition-all shadow-xs border border-input cursor-pointer ${
-                endosoBanco === op.value
-                  ? "border-yellow-400 bg-yellow-50 text-black font-semibold"
-                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-              }`}
+              className={`w-full text-left p-6 rounded-full text-sm font-medium transition-all shadow-xs border border-input cursor-pointer ${endosoBanco === op.value
+                ? "border-neutral-900 bg-neutral-900 hover:bg-neutral-700 text-white font-semibold"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-neutral-700 hover:text-white"
+                }`}
             >
               {op.label}
             </Button>
@@ -370,9 +366,8 @@ export function OfertaAwaitingAdvisorCard({
       className="w-full bg-white rounded-3xl border border-gray-200 p-8 text-center space-y-6 shadow-xs max-w-xl mx-auto"
     >
       <div
-        className={`mx-auto w-16 h-16 flex items-center justify-center rounded-full ${
-          isFailed ? "bg-amber-100 text-amber-700" : "bg-yellow-100 text-yellow-700"
-        }`}
+        className={`mx-auto w-16 h-16 flex items-center justify-center rounded-full ${isFailed ? "bg-amber-100 text-amber-700" : "bg-yellow-100 text-yellow-700"
+          }`}
       >
         <UserCheck size={32} />
       </div>
