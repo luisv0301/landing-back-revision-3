@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import CotizadorForm from "../components/forms/cotizadorForm";
 import { getGoogleReviews } from "@/lib/google-reviews";
+
+export const metadata: Metadata = {
+  title: "Cotizador de Seguro Todo Riesgo",
+  description:
+    "Cotiza y compara tu seguro todo riesgo para carro, moto o pesado con las mejores aseguradoras en tiempo real.",
+};
 
 export default async function FormPage({
   searchParams,

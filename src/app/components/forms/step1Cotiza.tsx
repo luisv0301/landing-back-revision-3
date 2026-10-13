@@ -22,6 +22,8 @@ import {
     DatosTomadorFields,
     CiudadCirculacionInput,
     OfertaAwaitingAdvisorCard,
+    VALIDACIONES,
+    FieldError,
 } from './shared/formFields';
 import { HelpCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
@@ -38,6 +40,7 @@ export default function Step1Cotiza({
 }: Step1CotizaProps) {
     const [esCeroKm, setEsCeroKm] = useState(false);
     const [modo0Km, setModo0Km] = useState<'catalogo' | 'factura'>('catalogo');
+    const [fieldErrors0Km, setFieldErrors0Km] = useState<Record<string, string | null>>({});
     const [tipoVehiculo, setTipoVehiculo] = useState<'carro' | 'moto' | 'pesado'>(initialTipo);
     const [submittedTicketId, setSubmittedTicketId] = useState<number | string | null>(null);
 
@@ -279,7 +282,6 @@ export default function Step1Cotiza({
         }
         setErrorHabeasData(false);
 
-
         // Cotizacion 0km sin factura, se avanza directo al paso 2
         if (esCeroKm) {
             if (modo0Km === 'catalogo') {
@@ -305,9 +307,49 @@ export default function Step1Cotiza({
                 return;
             }
 
-            if (modo0Km === 'factura' && errorFactura) {
-                e.preventDefault();
-                return;
+            if (modo0Km === 'factura') {
+                const formEl = e.currentTarget;
+                const fileInput = formEl.querySelector<HTMLInputElement>("#invoice");
+                const hasFile = Boolean(fileInput?.files && fileInput.files.length > 0);
+
+                const errores: Record<string, string | null> = {
+                    factura: !hasFile ? "Debes adjuntar la foto o PDF de la factura del vehículo." : (errorFactura || null),
+                    nombre: VALIDACIONES.nombre(nombre),
+                    apellido: VALIDACIONES.apellido(apellido),
+                    numeroDocumento: VALIDACIONES.documento(numeroDocumento, tipoDocumento),
+                    telefono: VALIDACIONES.telefono(telefono),
+                    email: VALIDACIONES.email(email),
+                    ciudad: VALIDACIONES.ciudad(ciudadSeleccionada, queryCiudad),
+                    fechaNacimiento: !fechaNacimiento ? "Ingresa tu fecha de nacimiento." : null,
+                };
+
+                if (!hasFile && !errorFactura) {
+                    setErrorFactura("Debes adjuntar la foto o PDF de la factura del vehículo.");
+                }
+
+                setFieldErrors0Km(errores);
+
+                const primerErrorCampo = Object.keys(errores).find((k) => Boolean(errores[k]));
+                if (primerErrorCampo) {
+                    e.preventDefault();
+
+                    const mapaSelectores: Record<string, string> = {
+                        factura: "#invoice",
+                        nombre: "#nombre",
+                        apellido: "#apellido",
+                        numeroDocumento: "#documento",
+                        telefono: "#telefono",
+                        email: "#email",
+                        ciudad: "#search_query_circulacion",
+                        fechaNacimiento: "#fechaNacimiento0km",
+                    };
+
+                    const selector = mapaSelectores[primerErrorCampo];
+                    if (selector) {
+                        formEl.querySelector<HTMLElement>(selector)?.focus();
+                    }
+                    return;
+                }
             }
         }
     };
@@ -317,6 +359,7 @@ export default function Step1Cotiza({
         setEsCeroKm(false);
         setModo0Km('catalogo');
         setErrorFactura(null);
+        setFieldErrors0Km({});
         setAceptaHabeasData(false);
         setMarca0Km('');
         setReferencia0Km('');
@@ -597,6 +640,10 @@ export default function Step1Cotiza({
                             onChangeTelefono={setTelefono}
                             email={email}
                             onChangeEmail={setEmail}
+                            errors={fieldErrors0Km}
+                            onBlurField={(field, error) => {
+                                setFieldErrors0Km((prev) => ({ ...prev, [field]: error }));
+                            }}
                         />
 
                         {/* Ciudad de Circulación */}
@@ -608,8 +655,13 @@ export default function Step1Cotiza({
                             onSelectCiudad={(c) => {
                                 setCiudadSeleccionada(c);
                                 setListaCiudades([]);
+                                setFieldErrors0Km((prev) => ({ ...prev, ciudad: null }));
                             }}
-                            onResetCiudad={() => setCiudadSeleccionada(null)}
+                            onResetCiudad={() => {
+                                setCiudadSeleccionada(null);
+                                setFieldErrors0Km((prev) => ({ ...prev, ciudad: null }));
+                            }}
+                            error={fieldErrors0Km["ciudad"]}
                         />
 
                         {/* Fecha de Nacimiento */}
@@ -620,10 +672,25 @@ export default function Step1Cotiza({
                                 name="fechaNacimiento"
                                 type="date"
                                 value={fechaNacimiento}
-                                onChange={(e) => setFechaNacimiento(e.target.value)}
+                                onChange={(e) => {
+                                    setFechaNacimiento(e.target.value);
+                                    if (fieldErrors0Km["fechaNacimiento"]) {
+                                        setFieldErrors0Km((prev) => ({ ...prev, fechaNacimiento: null }));
+                                    }
+                                }}
+                                onBlur={() => {
+                                    if (!fechaNacimiento) {
+                                        setFieldErrors0Km((prev) => ({ ...prev, fechaNacimiento: "Ingresa tu fecha de nacimiento." }));
+                                    } else {
+                                        setFieldErrors0Km((prev) => ({ ...prev, fechaNacimiento: null }));
+                                    }
+                                }}
+                                aria-invalid={Boolean(fieldErrors0Km["fechaNacimiento"])}
+                                aria-describedby={fieldErrors0Km["fechaNacimiento"] ? "fechaNacimiento0km-error" : undefined}
                                 required={esCeroKm && modo0Km === 'factura'}
                                 className="uppercase bg-white p-6 rounded-full"
                             />
+                            <FieldError id="fechaNacimiento0km" error={fieldErrors0Km["fechaNacimiento"]} />
                         </div>
                     </div>
                 )}

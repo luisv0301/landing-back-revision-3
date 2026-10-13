@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,120 @@ import {
 } from "@/components/ui/select";
 import { MunicipioDIVIPOLA } from "@/app/actions";
 import { DocumentType, PolicyExpiresCode } from "@/lib/types/sunrise";
-import { Search, X, UserCheck, RotateCcw } from "lucide-react";
+import { Search, X, UserCheck, RotateCcw, AlertCircle } from "lucide-react";
+
+// Subcomponente accesible y animado para mensajes de error debajo del campo
+export function FieldError({
+  id,
+  error,
+}: {
+  id: string;
+  error?: string | null;
+}) {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <AnimatePresence mode="wait">
+      {error && (
+        <motion.p
+          id={`${id}-error`}
+          role="alert"
+          aria-live="polite"
+          initial={{
+            opacity: 0,
+            transform: shouldReduceMotion ? "none" : "translateY(-4px)",
+          }}
+          animate={{
+            opacity: 1,
+            transform: shouldReduceMotion ? "none" : "translateY(0px)",
+          }}
+          exit={{
+            opacity: 0,
+            transform: shouldReduceMotion ? "none" : "translateY(-4px)",
+          }}
+          transition={{
+            duration: 0.18,
+            ease: [0.23, 1, 0.32, 1],
+          }}
+          className="text-xs text-red-500 font-medium mt-1.5 flex items-center gap-1.5"
+        >
+          <AlertCircle size={14} className="shrink-0 text-red-500" aria-hidden="true" />
+          <span>{error}</span>
+        </motion.p>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// Funciones puras de validación de campos
+export const VALIDACIONES = {
+  nombre: (val: string): string | null => {
+    const v = val.trim();
+    if (!v) return "Ingresa tu nombre.";
+    if (v.length < 2) return "El nombre debe tener al menos 2 caracteres.";
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(v)) {
+      return "El nombre solo puede contener letras y espacios.";
+    }
+    return null;
+  },
+
+  apellido: (val: string): string | null => {
+    const v = val.trim();
+    if (!v) return "Ingresa tu apellido.";
+    if (v.length < 2) return "El apellido debe tener al menos 2 caracteres.";
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(v)) {
+      return "El apellido solo puede contener letras y espacios.";
+    }
+    return null;
+  },
+
+  documento: (val: string, tipo: DocumentType): string | null => {
+    const v = val.trim();
+    if (!v) return "Ingresa tu número de documento.";
+
+    if (tipo === "CC") {
+      if (!/^\d+$/.test(v)) return "La cédula solo debe contener números.";
+      if (v.length < 5 || v.length > 10) return "La cédula debe tener entre 5 y 10 dígitos.";
+    } else if (tipo === "CE") {
+      if (!/^\d+$/.test(v)) return "La cédula de extranjería solo debe contener números.";
+      if (v.length < 6 || v.length > 10) return "La cédula de extranjería debe tener entre 6 y 10 dígitos.";
+    } else if (tipo === "NIT") {
+      if (!/^\d+$/.test(v)) return "El NIT solo debe contener números.";
+      if (v.length < 9 || v.length > 10) return "El NIT debe tener entre 9 y 10 dígitos.";
+    } else if (tipo === "PA") {
+      if (v.length < 6 || v.length > 16) return "El pasaporte debe tener entre 6 y 16 caracteres.";
+    }
+    return null;
+  },
+
+  telefono: (val: string): string | null => {
+    const v = val.replace(/\D/g, "");
+    if (!v) return "Ingresa tu número de celular.";
+    if (v.length !== 10 || !v.startsWith("3")) {
+      return "Ingresa un celular válido de 10 dígitos (ej: 300 123 4567).";
+    }
+    return null;
+  },
+
+  email: (val: string): string | null => {
+    const v = val.trim();
+    if (!v) return "Ingresa tu correo electrónico.";
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(v)) {
+      return "Ingresa un correo electrónico válido (ej: nombre@correo.com).";
+    }
+    return null;
+  },
+
+  ciudad: (ciudad: MunicipioDIVIPOLA | null, query: string): string | null => {
+    if (!ciudad) {
+      return query.trim().length > 0
+        ? "Selecciona una ciudad válida de las opciones desplegadas."
+        : "Selecciona tu ciudad de circulación.";
+    }
+    return null;
+  },
+};
 
 // Subcomponente: Formulario de Datos del Tomador
 export function DatosTomadorFields({
@@ -31,6 +145,8 @@ export function DatosTomadorFields({
   onChangeTelefono,
   email,
   onChangeEmail,
+  errors,
+  onBlurField,
 }: {
   nombre: string;
   onChangeNombre: (val: string) => void;
@@ -46,7 +162,37 @@ export function DatosTomadorFields({
   onChangeTelefono: (val: string) => void;
   email: string;
   onChangeEmail: (val: string) => void;
+  errors?: Record<string, string | null>;
+  onBlurField?: (field: string, error: string | null) => void;
 }) {
+  const [localErrors, setLocalErrors] = useState<Record<string, string | null>>({});
+
+  const handleBlur = (field: string) => {
+    let error: string | null = null;
+    switch (field) {
+      case "nombre":
+        error = VALIDACIONES.nombre(nombre);
+        break;
+      case "apellido":
+        error = VALIDACIONES.apellido(apellido);
+        break;
+      case "numeroDocumento":
+        error = VALIDACIONES.documento(numeroDocumento, tipoDocumento);
+        break;
+      case "telefono":
+        error = VALIDACIONES.telefono(telefono);
+        break;
+      case "email":
+        error = VALIDACIONES.email(email);
+        break;
+    }
+
+    setLocalErrors((prev) => ({ ...prev, [field]: error }));
+    onBlurField?.(field, error);
+  };
+
+  const getError = (field: string) => errors?.[field] ?? localErrors[field];
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -58,11 +204,15 @@ export function DatosTomadorFields({
             autoComplete="given-name"
             value={nombre}
             onChange={(e) => onChangeNombre(e.target.value)}
-
+            onBlur={() => handleBlur("nombre")}
+            aria-invalid={Boolean(getError("nombre"))}
+            aria-describedby={getError("nombre") ? "nombre-error" : undefined}
+            placeholder="Ej: Lionel Andrés…"
             required
             spellCheck={false}
             className="uppercase bg-white p-6 rounded-full"
           />
+          <FieldError id="nombre" error={getError("nombre")} />
         </div>
 
         <div className="space-y-2">
@@ -73,22 +223,33 @@ export function DatosTomadorFields({
             autoComplete="family-name"
             value={apellido}
             onChange={(e) => onChangeApellido(e.target.value)}
-
+            onBlur={() => handleBlur("apellido")}
+            aria-invalid={Boolean(getError("apellido"))}
+            aria-describedby={getError("apellido") ? "apellido-error" : undefined}
+            placeholder="Ej: Messi Cuccittini…"
             required
             spellCheck={false}
             className="uppercase bg-white p-6 rounded-full"
           />
+          <FieldError id="apellido" error={getError("apellido")} />
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <div className="space-y-2">
+      <div className="flex gap-2 items-start">
+        <div className="space-y-2 w-28 shrink-0">
           <Label>Tipo *</Label>
           <Select
             value={tipoDocumento}
-            onValueChange={(val) =>
-              onChangeTipoDocumento((val as DocumentType) ?? "CC")
-            }
+            onValueChange={(val) => {
+              const nextType = (val as DocumentType) ?? "CC";
+              onChangeTipoDocumento(nextType);
+              if (localErrors["numeroDocumento"] !== undefined) {
+                setLocalErrors((prev) => ({
+                  ...prev,
+                  numeroDocumento: VALIDACIONES.documento(numeroDocumento, nextType),
+                }));
+              }
+            }}
           >
             <SelectTrigger className="bg-white p-6 rounded-full w-full">
               <SelectValue placeholder="Tipo" />
@@ -110,10 +271,14 @@ export function DatosTomadorFields({
             name="numeroDocumento"
             value={numeroDocumento}
             onChange={(e) => onChangeNumeroDocumento(e.target.value)}
+            onBlur={() => handleBlur("numeroDocumento")}
+            aria-invalid={Boolean(getError("numeroDocumento"))}
+            aria-describedby={getError("numeroDocumento") ? "documento-error" : undefined}
             inputMode="numeric"
             required
             className="uppercase bg-white p-6 rounded-full pr-10"
           />
+          <FieldError id="documento" error={getError("numeroDocumento")} />
         </div>
       </div>
 
@@ -154,9 +319,13 @@ export function DatosTomadorFields({
           autoComplete="tel"
           value={telefono}
           onChange={(e) => onChangeTelefono(e.target.value)}
+          onBlur={() => handleBlur("telefono")}
+          aria-invalid={Boolean(getError("telefono"))}
+          aria-describedby={getError("telefono") ? "telefono-error" : undefined}
           required
           className="uppercase bg-white p-6 rounded-full"
         />
+        <FieldError id="telefono" error={getError("telefono")} />
       </div>
 
       <div className="space-y-2">
@@ -170,9 +339,13 @@ export function DatosTomadorFields({
           spellCheck={false}
           value={email}
           onChange={(e) => onChangeEmail(e.target.value)}
+          onBlur={() => handleBlur("email")}
+          aria-invalid={Boolean(getError("email"))}
+          aria-describedby={getError("email") ? "email-error" : undefined}
           required
           className="uppercase bg-white p-6 rounded-full pr-10"
         />
+        <FieldError id="email" error={getError("email")} />
       </div>
     </>
   );
@@ -186,6 +359,7 @@ export function CiudadCirculacionInput({
   onSearchCiudad,
   onSelectCiudad,
   onResetCiudad,
+  error: errorExterno,
 }: {
   ciudadSeleccionada: MunicipioDIVIPOLA | null;
   queryCiudad: string;
@@ -193,13 +367,25 @@ export function CiudadCirculacionInput({
   onSearchCiudad: (text: string) => void;
   onSelectCiudad: (c: MunicipioDIVIPOLA) => void;
   onResetCiudad: () => void;
+  error?: string | null;
 }) {
+  const [errorLocal, setErrorLocal] = useState<string | null>(null);
   const tieneValor = Boolean(ciudadSeleccionada || queryCiudad);
 
   const handleClear = () => {
     onResetCiudad();
     onSearchCiudad("");
+    setErrorLocal(null);
   };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      const err = VALIDACIONES.ciudad(ciudadSeleccionada, queryCiudad);
+      setErrorLocal(err);
+    }, 200);
+  };
+
+  const errorActual = errorExterno ?? errorLocal;
 
   return (
     <div className="space-y-2 relative">
@@ -227,12 +413,15 @@ export function CiudadCirculacionInput({
             onResetCiudad();
             onSearchCiudad(e.target.value);
           }}
+          onBlur={handleBlur}
           placeholder="ej: Cali, Bogotá"
           autoComplete="off"
           data-1p-ignore="true"
           data-lpignore="true"
           data-form-type="other"
           required
+          aria-invalid={Boolean(errorActual)}
+          aria-describedby={errorActual ? "search_query_circulacion-error" : undefined}
           className="uppercase bg-white p-6 rounded-full pr-12"
         />
         {tieneValor ? (
@@ -252,13 +441,21 @@ export function CiudadCirculacionInput({
         )}
       </div>
 
+      <FieldError id="search_query_circulacion" error={errorActual} />
+
       {!ciudadSeleccionada && listaCiudades.length > 0 && (
         <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto mt-1">
           {listaCiudades.map((c) => (
             <button
               key={c.city_code}
               type="button"
-              onClick={() => onSelectCiudad(c)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+              }}
+              onClick={() => {
+                onSelectCiudad(c);
+                setErrorLocal(null);
+              }}
               className="w-full text-left px-4 py-2.5 hover:bg-yellow-50 text-sm border-b last:border-0 border-gray-100 cursor-pointer"
             >
               <span className="font-semibold text-gray-900">{c.city_name}</span>

@@ -12,6 +12,8 @@ import {
   DatosTomadorFields,
   CiudadCirculacionInput,
   CondicionesPolizaFields,
+  VALIDACIONES,
+  FieldError,
 } from "./shared/formFields";
 
 export interface DatosPersonales {
@@ -126,6 +128,9 @@ export default function Step3DatosPersonales({
     initialData?.fechaNacimiento || "",
   );
 
+  // Errores de validación de campos
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+
   // Condiciones de la póliza
   const [policyExpires, setPolicyExpires] = useState<PolicyExpiresCode>(
     initialData?.policyExpires || "now",
@@ -182,6 +187,38 @@ export default function Step3DatosPersonales({
     );
     const rawInputCity = (inputCiudadEl?.value || queryCiudad || "").trim();
 
+    // 1. Validar todos los campos del formulario
+    const errores: Record<string, string | null> = {
+      nombre: VALIDACIONES.nombre(nombre),
+      apellido: VALIDACIONES.apellido(apellido),
+      numeroDocumento: VALIDACIONES.documento(numeroDocumento, tipoDocumento),
+      telefono: VALIDACIONES.telefono(telefono),
+      email: VALIDACIONES.email(email),
+      ciudad: VALIDACIONES.ciudad(ciudadSeleccionada, rawInputCity),
+      fechaNacimiento: !fechaNacimiento ? "Ingresa tu fecha de nacimiento." : null,
+    };
+
+    setFieldErrors(errores);
+
+    const primerErrorCampo = Object.keys(errores).find((k) => Boolean(errores[k]));
+    if (primerErrorCampo) {
+      const mapaSelectores: Record<string, string> = {
+        nombre: "#nombre",
+        apellido: "#apellido",
+        numeroDocumento: "#documento",
+        telefono: "#telefono",
+        email: "#email",
+        ciudad: "#search_query_circulacion",
+        fechaNacimiento: "#nacimiento",
+      };
+
+      const selector = mapaSelectores[primerErrorCampo];
+      if (selector) {
+        formElement.querySelector<HTMLElement>(selector)?.focus();
+      }
+      return;
+    }
+
     startTransitionSubmit(async () => {
       let targetCiudad = ciudadSeleccionada;
 
@@ -196,9 +233,11 @@ export default function Step3DatosPersonales({
       }
 
       if (!targetCiudad) {
-        setErrorLocal(
-          "Por favor selecciona tu ciudad de circulación de la lista.",
-        );
+        setFieldErrors((prev) => ({
+          ...prev,
+          ciudad: "Por favor selecciona tu ciudad de circulación de la lista.",
+        }));
+        formElement.querySelector<HTMLElement>("#search_query_circulacion")?.focus();
         return;
       }
 
@@ -271,7 +310,7 @@ export default function Step3DatosPersonales({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="w-full space-y-6">
+      <form onSubmit={handleSubmit} className="w-full space-y-6" noValidate>
         {/* Sección: Datos del Tomador */}
         <DatosTomadorFields
           nombre={nombre}
@@ -288,6 +327,10 @@ export default function Step3DatosPersonales({
           onChangeTelefono={setTelefono}
           email={email}
           onChangeEmail={setEmail}
+          errors={fieldErrors}
+          onBlurField={(field, error) => {
+            setFieldErrors((prev) => ({ ...prev, [field]: error }));
+          }}
         />
 
         {/* Sección: Ciudad de Circulación */}
@@ -299,8 +342,13 @@ export default function Step3DatosPersonales({
           onSelectCiudad={(c) => {
             setCiudadSeleccionada(c);
             setListaCiudades([]);
+            setFieldErrors((prev) => ({ ...prev, ciudad: null }));
           }}
-          onResetCiudad={() => setCiudadSeleccionada(null)}
+          onResetCiudad={() => {
+            setCiudadSeleccionada(null);
+            setFieldErrors((prev) => ({ ...prev, ciudad: null }));
+          }}
+          error={fieldErrors["ciudad"]}
         />
 
         {/* Fecha de Nacimiento */}
@@ -310,10 +358,25 @@ export default function Step3DatosPersonales({
             id="nacimiento"
             type="date"
             value={fechaNacimiento}
-            onChange={(e) => setFechaNacimiento(e.target.value)}
+            onChange={(e) => {
+              setFechaNacimiento(e.target.value);
+              if (fieldErrors["fechaNacimiento"]) {
+                setFieldErrors((prev) => ({ ...prev, fechaNacimiento: null }));
+              }
+            }}
+            onBlur={() => {
+              if (!fechaNacimiento) {
+                setFieldErrors((prev) => ({ ...prev, fechaNacimiento: "Ingresa tu fecha de nacimiento." }));
+              } else {
+                setFieldErrors((prev) => ({ ...prev, fechaNacimiento: null }));
+              }
+            }}
+            aria-invalid={Boolean(fieldErrors["fechaNacimiento"])}
+            aria-describedby={fieldErrors["fechaNacimiento"] ? "nacimiento-error" : undefined}
             required
             className="uppercase bg-white p-6 rounded-full"
           />
+          <FieldError id="nacimiento" error={fieldErrors["fechaNacimiento"]} />
         </div>
 
         {/* Condiciones de la Póliza */}

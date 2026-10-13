@@ -5,7 +5,8 @@ import Footer from "../components/home/footer";
 
 export const metadata: Metadata = {
     title: "Política de Protección de Datos",
-    description: "Política de Protección de Datos",
+    description:
+        "Política de tratamiento y protección de datos personales de Segurautos e INTERCOL LTDA.",
 };
 
 export default function PoliticasPage() {
