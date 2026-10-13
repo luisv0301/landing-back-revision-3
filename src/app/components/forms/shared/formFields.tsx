@@ -17,8 +17,10 @@ import { Search, X, UserCheck, RotateCcw } from "lucide-react";
 
 // Subcomponente: Formulario de Datos del Tomador
 export function DatosTomadorFields({
-  nombreCompleto,
+  nombre,
   onChangeNombre,
+  apellido,
+  onChangeApellido,
   tipoDocumento,
   onChangeTipoDocumento,
   numeroDocumento,
@@ -30,8 +32,10 @@ export function DatosTomadorFields({
   email,
   onChangeEmail,
 }: {
-  nombreCompleto: string;
+  nombre: string;
   onChangeNombre: (val: string) => void;
+  apellido: string;
+  onChangeApellido: (val: string) => void;
   tipoDocumento: DocumentType;
   onChangeTipoDocumento: (val: DocumentType) => void;
   numeroDocumento: string;
@@ -45,18 +49,36 @@ export function DatosTomadorFields({
 }) {
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="nombre">Nombre Completo *</Label>
-        <Input
-          id="nombre"
-          name="nombreCompleto"
-          value={nombreCompleto}
-          onChange={(e) => onChangeNombre(e.target.value)}
-          placeholder="Ej: Lionel Andrés Messi"
-          required
-          spellCheck={false}
-          className="uppercase bg-white p-6 rounded-full"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="nombre">Nombre(s) *</Label>
+          <Input
+            id="nombre"
+            name="nombre"
+            autoComplete="given-name"
+            value={nombre}
+            onChange={(e) => onChangeNombre(e.target.value)}
+
+            required
+            spellCheck={false}
+            className="uppercase bg-white p-6 rounded-full"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="apellido">Apellido(s) *</Label>
+          <Input
+            id="apellido"
+            name="apellido"
+            autoComplete="family-name"
+            value={apellido}
+            onChange={(e) => onChangeApellido(e.target.value)}
+
+            required
+            spellCheck={false}
+            className="uppercase bg-white p-6 rounded-full"
+          />
+        </div>
       </div>
 
       <div className="flex gap-2">
@@ -377,7 +399,7 @@ export function OfertaAwaitingAdvisorCard({
         <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
         {ticketId && (
           <div className="inline-block mt-3 px-4 py-1.5 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
-            Radicado de Solicitud: #{ticketId}
+            Número de Solicitud: #{ticketId}
           </div>
         )}
       </div>

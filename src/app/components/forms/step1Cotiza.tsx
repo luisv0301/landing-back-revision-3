@@ -61,7 +61,8 @@ export default function Step1Cotiza({
     const [, startTransitionCatalogo] = useTransition();
 
     // Estados para flujo de Factura 0 km
-    const [nombreCompleto, setNombreCompleto] = useState('');
+    const [nombre, setNombre] = useState('');
+    const [apellido, setApellido] = useState('');
     const [tipoDocumento, setTipoDocumento] = useState<DocumentType>('CC');
     const [numeroDocumento, setNumeroDocumento] = useState('');
     const [telefono, setTelefono] = useState('');
@@ -338,7 +339,6 @@ export default function Step1Cotiza({
         );
     }
 
-    console.log("listado de versiones", listaVersiones)
     return (
         <div className='w-full max-w-137.5'>
             <h1 className='text-3xl font-bold text-gray-900 text-center mb-2'>Cotiza tu seguro todo riesgo</h1>
@@ -583,8 +583,10 @@ export default function Step1Cotiza({
 
                         {/* Datos del Tomador */}
                         <DatosTomadorFields
-                            nombreCompleto={nombreCompleto}
-                            onChangeNombre={setNombreCompleto}
+                            nombre={nombre}
+                            onChangeNombre={setNombre}
+                            apellido={apellido}
+                            onChangeApellido={setApellido}
                             tipoDocumento={tipoDocumento}
                             onChangeTipoDocumento={setTipoDocumento}
                             numeroDocumento={numeroDocumento}

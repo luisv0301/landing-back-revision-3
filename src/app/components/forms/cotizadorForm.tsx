@@ -96,7 +96,9 @@ export default function CotizadorForm({
       await registrarLeadAction({
         vehicle_type: datos.vehiculo?.tipoVehiculo || initialTipo,
         funnel_stage: "invoice_pending",
-        name: datos.personales?.nombreCompleto,
+        name:
+          datos.personales?.nombreCompleto ||
+          `${datos.personales?.nombre || datos.personales?.firstname || ""} ${datos.personales?.apellido || datos.personales?.lastname || ""}`.trim(),
         phone: datos.personales?.telefono,
         email: datos.personales?.email,
         document_id: datos.personales?.numeroDocumento,
@@ -119,7 +121,9 @@ export default function CotizadorForm({
       await registrarLeadAction({
         vehicle_type: datosCotizacion.vehiculo?.tipoVehiculo || initialTipo,
         funnel_stage: "quoted",
-        name: datos.personales?.nombreCompleto || `${datos.personales?.firstname || ""} ${datos.personales?.lastname || ""}`.trim(),
+        name:
+          `${datos.personales?.nombre || datos.personales?.firstname || ""} ${datos.personales?.apellido || datos.personales?.lastname || ""}`.trim() ||
+          datos.personales?.nombreCompleto,
         phone: datos.personales?.telefono,
         email: datos.personales?.email,
         document_id: datos.personales?.numeroDocumento,
@@ -154,7 +158,9 @@ export default function CotizadorForm({
         await registrarLeadAction({
           vehicle_type: datosCotizacion.vehiculo?.tipoVehiculo || initialTipo,
           funnel_stage: "selected",
-          name: datosCotizacion.personales?.nombreCompleto,
+          name:
+            `${datosCotizacion.personales?.nombre || datosCotizacion.personales?.firstname || ""} ${datosCotizacion.personales?.apellido || datosCotizacion.personales?.lastname || ""}`.trim() ||
+            datosCotizacion.personales?.nombreCompleto,
           phone: datosCotizacion.personales?.telefono,
           email: datosCotizacion.personales?.email,
           plate: datosCotizacion.vehiculo?.placa,

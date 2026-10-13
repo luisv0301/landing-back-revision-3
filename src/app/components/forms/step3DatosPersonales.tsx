@@ -15,6 +15,8 @@ import {
 } from "./shared/formFields";
 
 export interface DatosPersonales {
+  nombre: string;
+  apellido: string;
   nombreCompleto: string;
   firstname: string;
   lastname: string;
@@ -94,9 +96,23 @@ export default function Step3DatosPersonales({
   initialData,
 }: Step3Props) {
   // Estados del Tomador / Conductor
-  const [nombreCompleto, setNombreCompleto] = useState(
-    initialData?.nombreCompleto || "",
-  );
+  const [nombre, setNombre] = useState(() => {
+    if (initialData?.nombre) return initialData.nombre;
+    if (initialData?.firstname) return initialData.firstname;
+    if (initialData?.nombreCompleto) {
+      return initialData.nombreCompleto.trim().split(" ")[0] || "";
+    }
+    return "";
+  });
+  const [apellido, setApellido] = useState(() => {
+    if (initialData?.apellido) return initialData.apellido;
+    if (initialData?.lastname) return initialData.lastname;
+    if (initialData?.nombreCompleto) {
+      const parts = initialData.nombreCompleto.trim().split(" ");
+      return parts.slice(1).join(" ") || "";
+    }
+    return "";
+  });
   const [tipoDocumento, setTipoDocumento] = useState<DocumentType>(
     initialData?.tipoDocumento || "CC",
   );
@@ -186,13 +202,15 @@ export default function Step3DatosPersonales({
         return;
       }
 
-      const partesNombre = nombreCompleto.trim().split(" ");
-      const firstname = partesNombre[0] || "";
-      const lastname = partesNombre.slice(1).join(" ") || partesNombre[0] || "";
+      const firstname = nombre.trim();
+      const lastname = apellido.trim();
+      const nombreCompleto = `${firstname} ${lastname}`.trim();
 
       const hasCurrentPolicy = policyExpires !== "none";
 
       const payloadPersonales: DatosPersonales = {
+        nombre: firstname,
+        apellido: lastname,
         nombreCompleto,
         firstname,
         lastname,
@@ -256,8 +274,10 @@ export default function Step3DatosPersonales({
       <form onSubmit={handleSubmit} className="w-full space-y-6">
         {/* Sección: Datos del Tomador */}
         <DatosTomadorFields
-          nombreCompleto={nombreCompleto}
-          onChangeNombre={setNombreCompleto}
+          nombre={nombre}
+          onChangeNombre={setNombre}
+          apellido={apellido}
+          onChangeApellido={setApellido}
           tipoDocumento={tipoDocumento}
           onChangeTipoDocumento={setTipoDocumento}
           numeroDocumento={numeroDocumento}

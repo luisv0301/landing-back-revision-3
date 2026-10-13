@@ -24,6 +24,8 @@ export interface IniciarCotizacionParams {
     useType?: string;
   };
   personales: {
+    nombre?: string;
+    apellido?: string;
     nombreCompleto?: string;
     firstname?: string;
     lastname?: string;
@@ -59,8 +61,8 @@ export async function iniciarCotizacionAction(datos: IniciarCotizacionParams) {
     }
 
     // Normalizar nombres
-    let firstName = (personales.firstname || "").trim();
-    let lastName = (personales.lastname || "").trim();
+    let firstName = (personales.firstname || personales.nombre || "").trim();
+    let lastName = (personales.lastname || personales.apellido || "").trim();
 
     if (!firstName && personales.nombreCompleto) {
       const parts = personales.nombreCompleto.trim().split(" ");
@@ -203,7 +205,9 @@ export async function iniciarCotizacion0KmAction(
 ) {
   try {
     const tipoVehiculo = (formData.get("tipoVehiculo")?.toString() || "carro") as VehicleType;
-    const nombreCompleto = (formData.get("nombreCompleto")?.toString() || "").trim();
+    const nombre = (formData.get("nombre")?.toString() || "").trim();
+    const apellido = (formData.get("apellido")?.toString() || "").trim();
+    const legacyNombreCompleto = (formData.get("nombreCompleto")?.toString() || "").trim();
     const tipoDocumento = (formData.get("tipoDocumento")?.toString() || "CC") as DocumentType;
     const numeroDocumento = (formData.get("numeroDocumento")?.toString() || "").trim();
     const telefono = (formData.get("telefono")?.toString() || "").replace(/\D/g, "");
@@ -228,16 +232,23 @@ export async function iniciarCotizacion0KmAction(
       };
     }
 
-    if (!nombreCompleto || !numeroDocumento || !telefono) {
+    let firstName = nombre;
+    let lastName = apellido;
+    if (!firstName && legacyNombreCompleto) {
+      const parts = legacyNombreCompleto.split(" ");
+      firstName = parts[0] || "";
+      lastName = parts.slice(1).join(" ") || parts[0] || "";
+    }
+
+    const nombreCompleto = `${firstName} ${lastName}`.trim();
+
+    if (!firstName || !lastName || !numeroDocumento || !telefono) {
       return {
         success: false,
-        error: "Por favor completa todos los datos obligatorios del tomador.",
+        error: "Por favor completa todos los datos obligatorios del tomador (nombre, apellido, documento y teléfono).",
       };
     }
 
-    const parts = nombreCompleto.split(" ");
-    const firstName = parts[0] || "";
-    const lastName = parts.slice(1).join(" ") || parts[0] || "";
     const genderMapped: GenderType =
       genero === "F" || genero === "femenino" ? "femenino" : "masculino";
 
@@ -272,6 +283,8 @@ export async function iniciarCotizacion0KmAction(
       pollAfterSeconds: res.poll_after_seconds || null,
       message: res.message || "Cotización radicada para atención por asesor.",
       personales: {
+        nombre: firstName,
+        apellido: lastName,
         nombreCompleto,
         firstname: firstName,
         lastname: lastName,
