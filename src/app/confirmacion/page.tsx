@@ -6,30 +6,37 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
-  FileCheck2,
-  PhoneCall,
-  ShieldCheck,
   RotateCcw,
   Home,
 } from "lucide-react";
 import Navbar from "@/app/components/home/navbar";
 import Footer from "@/app/components/home/footer";
 import { Button } from "@/components/ui/button";
+import {
+  useConfirmacionStore,
+  clearConfirmacionData,
+} from "@/lib/hooks/useConfirmacionStore";
 
 function ConfirmacionContent() {
+  const storeData = useConfirmacionStore();
   const searchParams = useSearchParams();
-  const insurer = searchParams.get("insurer");
-  const plan = searchParams.get("plan");
-  const premium = searchParams.get("premium");
-  const ticketId = searchParams.get("ticketId");
-  const logo = searchParams.get("logo");
+
+  const insurer = storeData?.insurer || searchParams.get("insurer") || "";
+  const plan = storeData?.plan || searchParams.get("plan") || "";
+  const rawPremium =
+    storeData?.premium !== undefined
+      ? storeData.premium
+      : searchParams.get("premium");
+  const premium = rawPremium ? Number(rawPremium) : null;
+  const ticketId = storeData?.ticketId || searchParams.get("ticketId") || "";
+  const logo = storeData?.logo || searchParams.get("logo") || "";
 
   const formattedPremium = premium
     ? new Intl.NumberFormat("es-CO", {
       style: "currency",
       currency: "COP",
       maximumFractionDigits: 0,
-    }).format(Number(premium))
+    }).format(premium)
     : null;
 
 
@@ -44,7 +51,7 @@ function ConfirmacionContent() {
         {/* Encabezado Principal */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-600 mb-2 shadow-inner">
-            <CheckCircle2 size={44} strokeWidth={2.5} />
+            <CheckCircle2 size={44} strokeWidth={2.5} aria-hidden="true" />
           </div>
 
 
@@ -76,13 +83,11 @@ function ConfirmacionContent() {
                 {logo && (
                   <img
                     src={logo}
-                    alt=""
-                    className="w-20 h-auto"
+                    alt={insurer ? `Logo de ${insurer}` : "Logo aseguradora"}
+                    className="w-24 h-auto"
                   />
                 )}
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mt-0.5">
-                  {insurer || "Aseguradora Aliada"}
-                </h2>
+
                 {plan && <p className="text-sm text-gray-500 font-medium">{plan}</p>}
               </div>
 
@@ -119,7 +124,7 @@ function ConfirmacionContent() {
               variant="outline"
               className="w-full sm:w-auto rounded-full px-8 py-6 font-semibold text-sm border-gray-300 hover:bg-gray-100 text-gray-800 cursor-pointer"
             >
-              <Home size={16} className="mr-2" />
+              <Home size={16} className="mr-2" aria-hidden="true" />
               Volver al inicio
             </Button>
           </Link>
@@ -127,9 +132,10 @@ function ConfirmacionContent() {
           <Link href="/formulario" className="w-full sm:w-auto">
             <Button
               type="button"
+              onClick={() => clearConfirmacionData()}
               className="w-full sm:w-auto bg-[#FFCC00] hover:bg-yellow-500 text-black rounded-full px-8 py-6 font-semibold text-sm cursor-pointer shadow-sm"
             >
-              <RotateCcw size={16} className="mr-2" />
+              <RotateCcw size={16} className="mr-2" aria-hidden="true" />
               Realizar una nueva cotización
             </Button>
           </Link>

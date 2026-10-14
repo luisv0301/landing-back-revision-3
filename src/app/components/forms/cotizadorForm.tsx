@@ -12,6 +12,7 @@ import { seleccionarPolizaAction } from "@/app/actions/cotizaciones";
 import { registrarLeadAction } from "@/app/actions/leads";
 import { toast } from "@/components/ui/toast";
 import { useMountEffect } from "@/lib/hooks/useMountEffect";
+import { saveConfirmacionData } from "@/lib/hooks/useConfirmacionStore";
 
 const PASOS = [
   { id: 1, title: "Cotiza" },
@@ -167,14 +168,15 @@ export default function CotizadorForm({
         });
 
         if (resp.success) {
-          const params = new URLSearchParams();
-          if (insurer) params.set("insurer", insurer);
-          if (planName) params.set("plan", planName);
-          if (premium > 0) params.set("premium", String(premium));
-          if (datosCotizacion.ticketId) params.set("ticketId", String(datosCotizacion.ticketId));
-          if (logo) params.set("logo", logo);
+          saveConfirmacionData({
+            insurer,
+            plan: planName,
+            premium: premium > 0 ? premium : undefined,
+            ticketId: datosCotizacion.ticketId,
+            logo,
+          });
 
-          router.push(`/confirmacion?${params.toString()}`);
+          router.push("/confirmacion");
         } else {
           toast.add({
             title: "Error al seleccionar la póliza",
@@ -225,6 +227,13 @@ export default function CotizadorForm({
           </button>
 
           <nav className="flex flex-col space-y-4 pt-4">
+            <img
+              src="/images/logo-transparent.png"
+              alt="Segurautos"
+              loading="eager"
+              decoding="async"
+              className="h-11 w-auto object-contain select-none"
+            />
             {PASOS.map((p) => {
               const isCurrent = step === p.id;
               const isCompleted = step > p.id;
@@ -243,20 +252,20 @@ export default function CotizadorForm({
                 >
                   {isCompleted ? (
                     <CheckCircle2
-                      size={18}
-                      className="text-[#FFCC00] fill-[#FFCC00] stroke-black"
+                      size={24}
+                      className="text-green-500 fill-green-500 stroke-black"
                     />
                   ) : isCurrent ? (
-                    <div className="w-4 h-4 rounded-full bg-[#FFCC00] border-2 border-black flex items-center justify-center" />
+                    <div className="w-6 h-6 rounded-full bg-[#FFCC00] border-2 border-black flex items-center justify-center" />
                   ) : (
-                    <div className="w-4 h-4 rounded-full bg-gray-300" />
+                    <div className="w-6 h-6 rounded-full bg-gray-300" />
                   )}
                   <span
                     className={
                       isCurrent
                         ? "font-bold text-black"
                         : isCompleted
-                          ? "text-gray-500 line-through"
+                          ? "text-gray-500"
                           : "text-gray-400"
                     }
                   >
