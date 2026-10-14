@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, type Transition } from "framer-motion";
 
 function subscribeScroll(callback: () => void) {
     window.addEventListener("scroll", callback, { passive: true });
@@ -64,7 +64,7 @@ export default function Navbar() {
     const isPast140vh = useScrollThreshold140vh();
     const shouldReduceMotion = useReducedMotion();
 
-    const layoutTransition = shouldReduceMotion
+    const layoutTransition: Transition = shouldReduceMotion
         ? { duration: 0 }
         : { duration: 0.25, ease: [0.23, 1, 0.32, 1] };
 
