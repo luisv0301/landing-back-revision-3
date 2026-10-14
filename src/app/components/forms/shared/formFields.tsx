@@ -207,7 +207,6 @@ export function DatosTomadorFields({
             onBlur={() => handleBlur("nombre")}
             aria-invalid={Boolean(getError("nombre"))}
             aria-describedby={getError("nombre") ? "nombre-error" : undefined}
-            placeholder="Ej: Lionel Andrés…"
             required
             spellCheck={false}
             className="uppercase bg-white p-6 rounded-full"
@@ -226,7 +225,6 @@ export function DatosTomadorFields({
             onBlur={() => handleBlur("apellido")}
             aria-invalid={Boolean(getError("apellido"))}
             aria-describedby={getError("apellido") ? "apellido-error" : undefined}
-            placeholder="Ej: Messi Cuccittini…"
             required
             spellCheck={false}
             className="uppercase bg-white p-6 rounded-full"
