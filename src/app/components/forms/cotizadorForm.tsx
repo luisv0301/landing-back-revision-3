@@ -323,6 +323,13 @@ export default function CotizadorForm({
                   transition={{ duration: 0.2 }}
                   className="absolute top-12 left-0 right-0 z-30 bg-white rounded-2xl p-4 shadow-xl border border-gray-100 space-y-2"
                 >
+                  <img
+                    src="/images/logo-transparent.png"
+                    alt="Segurautos"
+                    loading="eager"
+                    decoding="async"
+                    className="h-9 w-auto object-contain select-none mx-auto"
+                  />
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-1">
                     Pasos del cotizador
                   </div>
@@ -349,10 +356,10 @@ export default function CotizadorForm({
                           {isCompleted ? (
                             <CheckCircle2
                               size={18}
-                              className="text-[#FFCC00] fill-[#FFCC00] stroke-black"
+                              className="text-green-500 fill-green-500 stroke-black"
                             />
                           ) : isCurrent ? (
-                            <div className="w-3.5 h-3.5 rounded-full bg-[#FFCC00] border-2 border-black" />
+                            <div className="w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-black" />
                           ) : (
                             <div
                               className={`w-3.5 h-3.5 rounded-full ${accessible ? "bg-gray-400" : "bg-gray-200"}`}
@@ -360,7 +367,7 @@ export default function CotizadorForm({
                           )}
                           <span
                             className={
-                              isCompleted ? "line-through text-gray-400" : ""
+                              isCompleted ? " text-gray-400" : ""
                             }
                           >
                             {p.id}. {p.title}
